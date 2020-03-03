@@ -1,0 +1,15 @@
+artifact_uri: file:///home/arne/PycharmProjects/breast_cancer_classification/src/mlruns/0/36c01aff9b6b45739344f35ab954344b/artifacts
+end_time: 1583276070732
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+name: ''
+run_id: 36c01aff9b6b45739344f35ab954344b
+run_uuid: 36c01aff9b6b45739344f35ab954344b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1583275915513
+status: 3
+tags: []
+user_id: arne
