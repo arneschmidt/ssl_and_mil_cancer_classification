@@ -1,4 +1,5 @@
 import os
+import matplotlib.pyplot as plt
 from keras.applications.mobilenet_v2 import MobileNetV2
 from keras.models import Sequential, load_model
 from keras.layers import Dense
@@ -13,17 +14,6 @@ class ClassficationModel:
             self.model = load_model(load_model_path)
         else:
             self.model = self._initialize_model()
-
-    def _initialize_model(self):
-        model = Sequential()
-        model.add(MobileNetV2(include_top=False, input_shape=(96, 96, 3), weights='imagenet', pooling='avg'))
-        model.add(Dense(256, activation="relu"))
-        model.add(Dense(2, activation="softmax"))
-
-        model.compile(optimizer='adam',
-                      loss='categorical_crossentropy',
-                      metrics=['accuracy'])
-        return model
 
     def train(self, train_data_generator, val_data_generator, save_model_path):
         mlflow.keras.autolog()
@@ -43,3 +33,30 @@ class ClassficationModel:
             test_data_generator,
             steps=test_data_generator.n/self.batch_size,
         )
+
+    def predict(self, test_data_generator, output_dir):
+        image_batch = test_data_generator.next()
+        predictions = self.model.predict(image_batch[0], steps=1)
+        self._save_predictions(image_batch, predictions, output_dir)
+
+    def _initialize_model(self):
+        model = Sequential()
+        model.add(MobileNetV2(include_top=False, input_shape=(96, 96, 3), weights='imagenet', pooling='avg'))
+        model.add(Dense(256, activation="relu"))
+        model.add(Dense(2, activation="softmax"))
+
+        model.compile(optimizer='adam',
+                      loss='categorical_crossentropy',
+                      metrics=['accuracy'])
+        return model
+
+    def _save_predictions(self, image_batch, predictions, output_dir):
+        for i in range(image_batch[0].shape[0]):
+            plt.figure()
+            image = image_batch[0][i]
+            ground_truth = image_batch[1][i][1]
+            prediction = predictions[i][1]
+            plt.imshow(image.astype(int))
+            plt.title("Ground Truth: " + str(ground_truth) + "    Prediction: " + str(prediction))
+            os.makedirs(output_dir)
+            plt.savefig(os.path.join(output_dir, str(i) + ".png"))
