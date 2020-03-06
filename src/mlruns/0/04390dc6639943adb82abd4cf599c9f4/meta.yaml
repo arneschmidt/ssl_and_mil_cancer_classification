@@ -1,0 +1,15 @@
+artifact_uri: ./mlruns/0/04390dc6639943adb82abd4cf599c9f4/artifacts
+end_time: 1583435289789
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+name: ''
+run_id: 04390dc6639943adb82abd4cf599c9f4
+run_uuid: 04390dc6639943adb82abd4cf599c9f4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1583435199387
+status: 3
+tags: []
+user_id: arne

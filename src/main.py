@@ -7,7 +7,7 @@ def main(args):
     train_data, val_data, test_data = generate_data(args.data_dir, args.data_split_dir, args.batch_size)
 
     print("Load classification model")
-    classification_model = ClassficationModel(args.batch_size, args.load_model)
+    classification_model = ClassficationModel(args.batch_size, args.load_model, args.model_architecture)
 
     if args.mode == "train":
         print("Train")
@@ -22,15 +22,17 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Breast Cancer Classification")
-    parser.add_argument("--mode", "-m", type=str, default="predict",
+    parser.add_argument("--mode", "-m", type=str, default="train",
                         help="Choose mode: train or test")
+    parser.add_argument("--model_architecture", "-a", type=str, default="simple_cnn",
+                        help="Choose model architecture: mobilenetv2 or simple_cnn")
     parser.add_argument("--data_dir", "-d", type=str, default="../data/",
                         help="Dataset directory.")
     parser.add_argument("--data_split_dir", "-f", type=str, default="../data_split/",
                         help="txt file with all filenames and paths")
-    parser.add_argument("--save_model", "-s", type=str, default="../models/mobilenet.h5",
+    parser.add_argument("--save_model", "-s", type=str, default="../models/simple_cnn.h5",
                         help="Path to save model.")
-    parser.add_argument("--load_model", "-l", type=str, default="../models/mobilenet.h5",
+    parser.add_argument("--load_model", "-l", type=str, default="None",
                         help="Path to .h5 model to load for testing or retraining. Set to 'None' for new model.")
     parser.add_argument("--output_dir", "-o", type=str, default="../output/",
                         help="Path to .h5 model to load for testing or retraining. Set to 'None' for new model.")
