@@ -1,10 +1,11 @@
 import os
 import matplotlib.pyplot as plt
-from keras.applications.mobilenet_v2 import MobileNetV2
-from keras.models import Sequential, load_model
-from keras.layers import Dense, Conv2D, Dropout, MaxPool2D, Flatten, GlobalAveragePooling2D, SeparableConv2D
-from keras.callbacks import ModelCheckpoint
-import mlflow.keras
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+from tensorflow.keras.applications.efficientnet import EfficientNetB0
+from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.layers import Dense, Conv2D, Dropout, MaxPool2D, Flatten, GlobalAveragePooling2D, SeparableConv2D
+from tensorflow.keras.callbacks import ModelCheckpoint
+import mlflow
 
 
 class ClassficationModel:
@@ -17,20 +18,19 @@ class ClassficationModel:
         print(self.model.summary())
 
     def train(self, train_data_generator, val_data_generator, save_model_path):
-        mlflow.keras.autolog()
+        mlflow.tensorflow.autolog()
         os.makedirs(os.path.dirname(save_model_path), exist_ok=True)
         checkpoint_callback = ModelCheckpoint(save_model_path, monitor='val_accuracy', verbose=1)
-        self.model.fit_generator(
+        self.model.fit(
             train_data_generator,
+            epochs=100,
             steps_per_epoch=1000,
             callbacks=[checkpoint_callback],
-            validation_data=val_data_generator,
-            validation_steps=100,
-            epochs=100
+            validation_data=val_data_generator
         )
 
     def test(self, test_data_generator):
-        self.model.evaluate_generator(
+        self.model.evaluate(
             test_data_generator,
             steps=test_data_generator.n/self.batch_size,
         )
@@ -45,6 +45,8 @@ class ClassficationModel:
         model = Sequential()
         if model_architecture == "mobilenetv2":
             model.add(MobileNetV2(include_top=False, input_shape=input_shape, weights='imagenet', pooling='avg'))
+        elif model_architecture == "efficientnetb0":
+            model.add(EfficientNetB0(include_top=False, input_shape=input_shape, weights='imagenet', pooling='avg'))
         elif model_architecture == "simple_cnn":
             model.add(SeparableConv2D(64, kernel_size=3, activation='relu', input_shape=input_shape))
             for i in range(3):
@@ -57,7 +59,7 @@ class ClassficationModel:
         else:
             raise Exception("Choose valid model architecture!")
         model.add(Dense(256, activation="relu"))
-        model.add(Dense(2, activation="softmax"))
+        model.add(Dense(4, activation="softmax"))
 
         model.compile(optimizer='adam',
                       loss='categorical_crossentropy',

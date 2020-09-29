@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-filenames_path = "../filenames.txt"
+filenames_path = "filenames.txt"
 
 df = pd.read_csv(filenames_path)
 val_idx = np.random.choice(277524, replace=False, size=27752)
