@@ -4,6 +4,17 @@ import numpy as np
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from typing import Dict, Optional, Tuple
 
+
+def generate_data(dataset_name: str, data_dir: str, split_dir: str,
+                  image_target_size: Tuple, batch_size: int):
+    train_df, val_df, test_df = load_dataframes(dataset_name, split_dir)
+
+    train_generator = data_generator_from_dataframe(data_dir, train_df, batch_size, image_target_size, image_augmentation=True)
+    validation_generator = data_generator_from_dataframe(data_dir, val_df, batch_size, image_target_size, image_augmentation=False)
+    test_generator = data_generator_from_dataframe(data_dir, test_df, batch_size, image_target_size, image_augmentation=False)
+
+    return train_generator, validation_generator, test_generator
+
 def data_generator_from_dataframe(data_dir: str, dataframe: pd.DataFrame, batch_size:int, image_target_size:int, image_augmentation=False):
     if image_augmentation:
         datagen = ImageDataGenerator(
@@ -24,17 +35,6 @@ def data_generator_from_dataframe(data_dir: str, dataframe: pd.DataFrame, batch_
         class_mode="categorical")
 
     return generator
-
-
-def generate_data(dataset_name: str, artifact_base_folder: str, data_dir: str, split_dir: str,
-                  image_target_size: Tuple, batch_size: int):
-    train_df, val_df, test_df = load_dataframes(dataset_name, split_dir)
-
-    train_generator = data_generator_from_dataframe(data_dir, train_df, batch_size, image_target_size, image_augmentation=True)
-    validation_generator = data_generator_from_dataframe(data_dir, val_df, batch_size, image_target_size, image_augmentation=False)
-    test_generator = data_generator_from_dataframe(data_dir, test_df, batch_size, image_target_size, image_augmentation=False)
-
-    return train_generator, validation_generator, test_generator
 
 def load_dataframes(dataset_name: str, filenames_path: str):
     if dataset_name == "breast_hist_images":

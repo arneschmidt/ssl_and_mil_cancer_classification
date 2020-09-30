@@ -1,5 +1,6 @@
 import os
 import matplotlib.pyplot as plt
+import tensorflow as tf
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 from tensorflow.keras.applications.efficientnet import EfficientNetB0
 from tensorflow.keras.models import Sequential, load_model
@@ -9,23 +10,24 @@ import mlflow
 
 
 class ClassficationModel:
-    def __init__(self, batch_size, load_model_path, model_architecture):
+    def __init__(self, batch_size, load_model_path, model_architecture, image_size, num_classes):
         self.batch_size = batch_size
         if load_model_path is not "None":
-            self.model = load_model(load_model_path)
+            self.load_combined_model(load_model_path, "cnn")
         else:
-            self.model = self._initialize_model(model_architecture)
+            self._create_model(model_architecture, image_size, num_classes)
         print(self.model.summary())
 
     def train(self, train_data_generator, val_data_generator, save_model_path):
         mlflow.tensorflow.autolog()
         os.makedirs(os.path.dirname(save_model_path), exist_ok=True)
-        checkpoint_callback = ModelCheckpoint(save_model_path, monitor='val_accuracy', verbose=1)
+        # checkpoint_callback = ModelCheckpoint(save_model_path, monitor='val_accuracy', verbose=1)
+        steps_per_epoch = int(train_data_generator.n / train_data_generator.batch_size)
         self.model.fit(
             train_data_generator,
-            epochs=100,
-            steps_per_epoch=1000,
-            callbacks=[checkpoint_callback],
+            epochs=10,
+            steps_per_epoch=steps_per_epoch,
+            # callbacks=[checkpoint_callback],
             validation_data=val_data_generator
         )
 
@@ -40,31 +42,54 @@ class ClassficationModel:
         predictions = self.model.predict(image_batch[0], steps=1)
         self._save_predictions(image_batch, predictions, output_dir)
 
-    def _initialize_model(self, model_architecture):
-        input_shape = (96, 96, 3)
-        model = Sequential()
+    def save(self, path: str = "./models/",  name: str = "cnn"):
+        self.feature_extractor.save(os.path.join(path, name + "_feature_extractor.h5"))
+        self.head.save(os.path.join(path, name + "_head.h5"))
+
+    def load_combined_model(self, path: str = "./models/",  name: str = "cnn"):
+        self.feature_extractor = tf.keras.models.load_model(os.path.join(path, name + "_feature_extractor.h5"))
+        self.head = tf.keras.models.load_model(os.path.join(path, name + "_head.h5"))
+        self.model = tf.keras.models.Sequential([self.feature_extractor, self.head])
+        self.model.compile(
+            loss='sparse_categorical_crossentropy',
+            optimizer=tf.keras.optimizers.Adam(0.001), # TODO move to config
+            metrics=['accuracy'],
+        )
+        self.model.summary()
+
+    def _create_model(self, model_architecture, image_size, num_classes):
+        input_shape = (image_size[0], image_size[1], 3)
+
+        feature_extractor = Sequential()
+
         if model_architecture == "mobilenetv2":
-            model.add(MobileNetV2(include_top=False, input_shape=input_shape, weights='imagenet', pooling='avg'))
+            feature_extractor.add(MobileNetV2(include_top=False, input_shape=input_shape, weights='imagenet', pooling='avg'))
         elif model_architecture == "efficientnetb0":
-            model.add(EfficientNetB0(include_top=False, input_shape=input_shape, weights='imagenet', pooling='avg'))
+            feature_extractor.add(EfficientNetB0(include_top=False, input_shape=input_shape, weights='imagenet', pooling='avg'))
         elif model_architecture == "simple_cnn":
-            model.add(SeparableConv2D(64, kernel_size=3, activation='relu', input_shape=input_shape))
+            feature_extractor.add(SeparableConv2D(64, kernel_size=3, activation='relu', input_shape=input_shape))
             for i in range(3):
-                model.add(SeparableConv2D(32, kernel_size=3, activation='relu'))
-                model.add(SeparableConv2D(32, kernel_size=3, activation='relu'))
-                model.add(MaxPool2D(pool_size=(2, 2)))
-            model.add(SeparableConv2D(32, kernel_size=3, activation='relu'))
-            model.add(SeparableConv2D(32, kernel_size=3, activation='relu'))
-            model.add(GlobalAveragePooling2D())
+                feature_extractor.add(SeparableConv2D(32, kernel_size=3, activation='relu'))
+                feature_extractor.add(SeparableConv2D(32, kernel_size=3, activation='relu'))
+                feature_extractor.add(MaxPool2D(pool_size=(2, 2)))
+            feature_extractor.add(SeparableConv2D(32, kernel_size=3, activation='relu'))
+            feature_extractor.add(SeparableConv2D(32, kernel_size=3, activation='relu'))
+            feature_extractor.add(GlobalAveragePooling2D())
         else:
             raise Exception("Choose valid model architecture!")
-        model.add(Dense(256, activation="relu"))
-        model.add(Dense(4, activation="softmax"))
 
+        head = Sequential()
+        head.add(Dense(16, activation="relu"))
+        head.add(Dense(int(num_classes), activation="softmax"))
+
+        model = Sequential([feature_extractor, head])
         model.compile(optimizer='adam',
                       loss='categorical_crossentropy',
                       metrics=['accuracy'])
-        return model
+
+        self.feature_extractor = feature_extractor
+        self.head = head
+        self.model = model
 
     def _save_predictions(self, image_batch, predictions, output_dir):
         for i in range(image_batch[0].shape[0]):
