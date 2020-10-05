@@ -10,17 +10,20 @@ import mlflow
 
 
 class ClassficationModel:
-    def __init__(self, batch_size, load_model_path, model_architecture, image_size, num_classes):
-        self.batch_size = batch_size
-        if load_model_path is not "None":
-            self.load_combined_model(load_model_path, "cnn")
+    def __init__(self, config, num_classes):
+        self.batch_size = config["model"]["batch_size"]
+        self.num_classes = num_classes
+        if config["model"]["load_name"] != "None":
+            self._load_combined_model(config["data"]["artifact_dir"], config["model"]["load_name"])
         else:
-            self._create_model(model_architecture, image_size, num_classes)
+            self._create_model(config["model"]["architecture"],
+                               config["data"]["image_target_size"],
+                               self.num_classes)
         print(self.model.summary())
 
     def train(self, train_data_generator, val_data_generator, save_model_path):
         mlflow.tensorflow.autolog()
-        os.makedirs(os.path.dirname(save_model_path), exist_ok=True)
+        # os.makedirs(os.path.dirname(save_model_path), exist_ok=True)
         # checkpoint_callback = ModelCheckpoint(save_model_path, monitor='val_accuracy', verbose=1)
         steps_per_epoch = int(train_data_generator.n / train_data_generator.batch_size)
         self.model.fit(
@@ -46,9 +49,10 @@ class ClassficationModel:
         self.feature_extractor.save(os.path.join(path, name + "_feature_extractor.h5"))
         self.head.save(os.path.join(path, name + "_head.h5"))
 
-    def load_combined_model(self, path: str = "./models/",  name: str = "cnn"):
-        self.feature_extractor = tf.keras.models.load_model(os.path.join(path, name + "_feature_extractor.h5"))
-        self.head = tf.keras.models.load_model(os.path.join(path, name + "_head.h5"))
+    def _load_combined_model(self, artifact_path: str = "./models/", name: str = "cnn"):
+        model_path = os.path.join(artifact_path, "models")
+        self.feature_extractor = tf.keras.models.load_model(os.path.join(model_path, name + "_feature_extractor.h5"))
+        self.head = tf.keras.models.load_model(os.path.join(model_path, name + "_head.h5"))
         self.model = tf.keras.models.Sequential([self.feature_extractor, self.head])
         self.model.compile(
             loss='sparse_categorical_crossentropy',
