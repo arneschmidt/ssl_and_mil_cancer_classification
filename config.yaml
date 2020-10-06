@@ -1,0 +1,6 @@
+model:
+  mode: train
+  architecture: efficientnetb0
+  batch_size: 32
+
+dataset_config: ./dataset_dependent/sicapv2/config.yaml
