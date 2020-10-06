@@ -67,9 +67,9 @@ class ClassficationModel:
         feature_extractor = Sequential()
 
         if model_architecture == "mobilenetv2":
-            feature_extractor.add(MobileNetV2(include_top=False, input_shape=input_shape, weights='imagenet', pooling='avg'))
+            feature_extractor.add(MobileNetV2(include_top=False, input_shape=input_shape, weights=None, pooling='avg'))
         elif model_architecture == "efficientnetb0":
-            feature_extractor.add(EfficientNetB0(include_top=False, input_shape=input_shape, weights='imagenet', pooling='avg'))
+            feature_extractor.add(EfficientNetB0(include_top=False, input_shape=input_shape, weights=None, pooling='avg'))
         elif model_architecture == "simple_cnn":
             feature_extractor.add(SeparableConv2D(64, kernel_size=3, activation='relu', input_shape=input_shape))
             for i in range(3):

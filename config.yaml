@@ -3,4 +3,4 @@ model:
   architecture: efficientnetb0
   batch_size: 32
 
-dataset_config: ./dataset_dependent/breast_hist_images/config.yaml
+dataset_config: ./dataset_dependent/sicapv2/config.yaml
