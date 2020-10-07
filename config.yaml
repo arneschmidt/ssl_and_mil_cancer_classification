@@ -1,6 +1,14 @@
+# This is the main config. Parameters are update and possibly overwritten by dataset dependent configs.
 model:
   mode: train
-  architecture: efficientnetb0
-  batch_size: 32
+  architecture: simple_cnn
+  num_output_features: 16
+  batch_size: 16
+  epochs: 10
 
 dataset_config: ./dataset_dependent/sicapv2/config.yaml
+
+logging:
+  log_experiment: False
+  run_name: test
+  tracking_url: /home/arne/projects/mlruns
