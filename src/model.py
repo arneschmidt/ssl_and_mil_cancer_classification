@@ -1,23 +1,26 @@
 import os
 import matplotlib.pyplot as plt
 import tensorflow as tf
+import tensorflow_probability as tfp
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 from tensorflow.keras.applications.efficientnet import EfficientNetB0
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Conv2D, Dropout, MaxPool2D, Flatten, GlobalAveragePooling2D, SeparableConv2D
 from tensorflow.keras.callbacks import ModelCheckpoint
-from mlflow_log import MLFlowCallback
+from src.mlflow_log import MLFlowCallback
 
 
 class ClassficationModel:
-    def __init__(self, config, num_classes):
+    def __init__(self, config, num_classes, n_training_points):
+        self.n_training_points = n_training_points
         self.batch_size = config["model"]["batch_size"]
         self.num_classes = num_classes
         self.config = config
         if config["model"]["load_name"] != "None":
             self._load_combined_model(config["data"]["artifact_dir"], config["model"]["load_name"])
         else:
-            self._create_model(config["model"]["architecture"],
+            self._create_model(config["model"]["feature_extractor"],
+                               config["model"]["head"],
                                config["data"]["image_target_size"],
                                self.num_classes)
         print(self.model.summary())
@@ -27,7 +30,7 @@ class ClassficationModel:
             callbacks = [MLFlowCallback(self.config)]
         else:
             callbacks = []
-        steps_per_epoch = int(train_data_generator.n / train_data_generator.batch_size)
+        steps_per_epoch = int(self.n_training_points / train_data_generator.batch_size)
         self.model.fit(
             train_data_generator,
             epochs=self.config["model"]["epochs"],
@@ -56,12 +59,12 @@ class ClassficationModel:
         self.model = tf.keras.models.Sequential([self.feature_extractor, self.head])
         self.model.compile(
             loss='categorical_crossentropy',
-            optimizer=tf.keras.optimizers.Adam(0.001), # TODO move to config
+            optimizer=tf.keras.optimizers.Adam(0.01), # TODO move to config
             metrics=['accuracy'],
         )
         self.model.summary()
 
-    def _create_model(self, model_architecture, image_size, num_classes):
+    def _create_model(self, model_architecture, model_head, image_size, num_classes):
         input_shape = (image_size[0], image_size[1], 3)
 
         feature_extractor = Sequential()
@@ -82,13 +85,28 @@ class ClassficationModel:
         else:
             raise Exception("Choose valid model architecture!")
 
-        head = Sequential()
-        head.add(Dense(self.config["model"]["num_output_features"], activation="relu"))
-        head.add(Dense(int(num_classes), activation="softmax"))
 
+        if model_head == "deterministic":
+            head = Sequential([
+                Dense(self.config["model"]["num_output_features"], activation="relu"),
+                Dense(int(num_classes), activation="softmax")
+            ])
+
+        elif model_head == "bayesian":
+            tfd = tfp.distributions
+            kl_divergence_function = (lambda q, p, _: tfd.kl_divergence(q, p) /  # pylint: disable=g-long-lambda
+                                                      tf.cast(self.n_training_points, dtype=tf.float32))
+            head = tf.keras.Sequential([
+                tfp.layers.DenseReparameterization(units=512, kernel_divergence_fn=kl_divergence_function,
+                                                   bias_divergence_fn=kl_divergence_function, activation=tf.nn.relu),
+                tfp.layers.DenseReparameterization(units=int(num_classes),kernel_divergence_fn=kl_divergence_function,
+                                                   bias_divergence_fn=kl_divergence_function, activation="softmax"),
+            ])
+        else:
+            raise Exception("Choose valid model head!")
         model = Sequential([feature_extractor, head])
         model.compile(optimizer='adam',
-                      loss='categorical_crossentropy',
+                      loss=['categorical_crossentropy'],
                       metrics=['accuracy'])
 
         # self.feature_extractor = feature_extractor

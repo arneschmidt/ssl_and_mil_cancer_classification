@@ -6,7 +6,7 @@ import tensorflow as tf
 from typing import Dict, Optional, Tuple
 from src.data import DataGenerator
 from src.model import ClassficationModel
-from mlflow_log import MLFlowLogger
+from src.mlflow_log import MLFlowLogger
 
 def main(config):
     devices = tf.config.experimental.list_physical_devices('GPU')
@@ -21,7 +21,7 @@ def main(config):
 
     print("Load classification model")
     num_classes = len(train_data.class_indices.values())
-    classification_model = ClassficationModel(config, num_classes)
+    classification_model = ClassficationModel(config, num_classes, train_data.n)
 
     if config["model"]["mode"] == "train":
         print("Train")
