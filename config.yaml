@@ -1,8 +1,8 @@
 # This is the main config. Parameters are update and possibly overwritten by dataset dependent configs.
 model:
-  mode: train
-  feature_extractor: simple_cnn
-  head: bayesian
+  mode: train # "train", "test", "predict"
+  feature_extractor: simple_cnn # "simple_cnn", "mobilenetv2" or "efficientnetb0"
+  head: gp # "deterministic", "bayesian" or "gp"
   num_output_features: 16
   batch_size: 16
   epochs: 10

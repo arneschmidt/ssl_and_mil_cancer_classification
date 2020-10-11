@@ -2,6 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_probability as tfp
+import numpy as np
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 from tensorflow.keras.applications.efficientnet import EfficientNetB0
 from tensorflow.keras.models import Sequential, load_model
@@ -84,23 +85,38 @@ class ClassficationModel:
             feature_extractor.add(GlobalAveragePooling2D())
         else:
             raise Exception("Choose valid model architecture!")
-
+        feature_extractor.add(Dense(self.config["model"]["num_output_features"], activation="relu"))
 
         if model_head == "deterministic":
             head = Sequential([
                 Dense(self.config["model"]["num_output_features"], activation="relu"),
                 Dense(int(num_classes), activation="softmax")
             ])
-
         elif model_head == "bayesian":
             tfd = tfp.distributions
             kl_divergence_function = (lambda q, p, _: tfd.kl_divergence(q, p) /  # pylint: disable=g-long-lambda
                                                       tf.cast(self.n_training_points, dtype=tf.float32))
             head = tf.keras.Sequential([
-                tfp.layers.DenseReparameterization(units=512, kernel_divergence_fn=kl_divergence_function,
+                tfp.layers.DenseReparameterization(units=self.config["model"]["num_output_features"], kernel_divergence_fn=kl_divergence_function,
                                                    bias_divergence_fn=kl_divergence_function, activation=tf.nn.relu),
                 tfp.layers.DenseReparameterization(units=int(num_classes),kernel_divergence_fn=kl_divergence_function,
                                                    bias_divergence_fn=kl_divergence_function, activation="softmax"),
+            ])
+        elif model_head == "gp":
+            num_inducing_points = 50
+            head = tf.keras.Sequential([
+                tfp.layers.VariationalGaussianProcess(
+                num_inducing_points=num_inducing_points,
+                kernel_provider=RBFKernelFn(),
+                event_shape=[num_classes], # output dimensions
+                inducing_index_points_initializer=tf.keras.initializers.RandomUniform(
+                    minval=0.0, maxval=1.0, seed=None
+                ),
+                jitter=10e-3
+                # unconstrained_observation_noise_variance_initializer=(
+                #     tf.constant_initializer(np.array(0.54).astype(np.float32))),
+                ),
+                tf.keras.layers.Softmax()
             ])
         else:
             raise Exception("Choose valid model head!")
@@ -123,3 +139,31 @@ class ClassficationModel:
             plt.title("Ground Truth: " + str(ground_truth) + "    Prediction: " + str(prediction))
             os.makedirs(output_dir, exist_ok=True)
             plt.savefig(os.path.join(output_dir, str(i) + ".png"))
+
+
+class RBFKernelFn(tf.keras.layers.Layer):
+    def __init__(self, **kwargs):
+        super(RBFKernelFn, self).__init__(**kwargs)
+        dtype = kwargs.get('dtype', None)
+
+        self._amplitude = self.add_variable(
+            initializer=tf.constant_initializer(0),
+            dtype=dtype,
+            name='amplitude')
+
+        self._length_scale = self.add_variable(
+            initializer=tf.constant_initializer(0),
+            dtype=dtype,
+            name='length_scale')
+
+    def call(self, x):
+        # Never called -- this is just a layer so it can hold variables
+        # in a way Keras understands.
+        return x
+
+    @property
+    def kernel(self):
+        return tfp.math.psd_kernels.ExponentiatedQuadratic(
+            amplitude=tf.nn.softplus(0.1 * self._amplitude),
+            length_scale=tf.nn.softplus(5. * self._length_scale)
+        )
