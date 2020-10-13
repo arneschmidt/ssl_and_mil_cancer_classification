@@ -8,8 +8,8 @@ from tensorflow.keras.applications.efficientnet import EfficientNetB0
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Conv2D, Dropout, MaxPool2D, Flatten, GlobalAveragePooling2D, SeparableConv2D
 from tensorflow.keras.callbacks import ModelCheckpoint
-from src.mlflow_log import MLFlowCallback
-from src.model_architecture import create_model
+from mlflow_log import MLFlowCallback
+from model_architecture import create_model
 
 
 class ClassficationModel:

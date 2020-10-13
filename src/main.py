@@ -4,9 +4,9 @@ import collections
 import yaml
 import tensorflow as tf
 from typing import Dict, Optional, Tuple
-from src.data import DataGenerator
-from src.model import ClassficationModel
-from src.mlflow_log import MLFlowLogger
+from data import DataGenerator
+from model import ClassficationModel
+from mlflow_log import MLFlowLogger
 
 def main(config):
     devices = tf.config.experimental.list_physical_devices('GPU')
