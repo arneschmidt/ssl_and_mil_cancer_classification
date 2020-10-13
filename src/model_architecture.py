@@ -4,21 +4,36 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 import numpy as np
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
-from tensorflow.keras.applications.efficientnet import EfficientNetB0
+from tensorflow.keras.applications.efficientnet import EfficientNetB0, EfficientNetB1
+from tensorflow.keras.applications.resnet50 import ResNet50
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Conv2D, Dropout, MaxPool2D, Flatten, GlobalAveragePooling2D, SeparableConv2D
 
 
 def create_model(config, num_classes, num_training_points):
-    input_shape = (config["data"]["image_target_size"][0], config["data"]["image_target_size"][1], 3)
+    feature_extractor = create_feature_extactor(config)
+    head = create_head(config, num_classes, num_training_points)
 
+    model = Sequential([feature_extractor, head])
+    model.compile(optimizer='adam',
+                  loss=['categorical_crossentropy'],
+                  metrics=['accuracy'])
+
+    return model
+
+def create_feature_extactor(config):
+    input_shape = (config["data"]["image_target_size"][0], config["data"]["image_target_size"][1], 3)
     feature_extractor = Sequential()
+    weights = "imagenet"
 
     if config["model"]["feature_extractor"] == "mobilenetv2":
         feature_extractor.add(MobileNetV2(include_top=False, input_shape=input_shape, weights=None, pooling='avg'))
     elif config["model"]["feature_extractor"] == "efficientnetb0":
-        feature_extractor.add \
-            (EfficientNetB0(include_top=False, input_shape=input_shape, weights="imagenet", pooling='avg'))
+        feature_extractor.add(EfficientNetB0(include_top=False, input_shape=input_shape, weights=weights, pooling='avg'))
+    elif config["model"]["feature_extractor"] == "efficientnetb1":
+        feature_extractor.add(EfficientNetB1(include_top=False, input_shape=input_shape, weights=weights, pooling='avg'))
+    elif config["model"]["feature_extractor"] == "resnet50":
+        feature_extractor.add(ResNet50(include_top=False, input_shape=input_shape, weights=weights, pooling='avg'))
     elif config["model"]["feature_extractor"] == "simple_cnn":
         feature_extractor.add(SeparableConv2D(64, kernel_size=3, activation='relu', input_shape=input_shape))
         for i in range(3):
@@ -32,13 +47,19 @@ def create_model(config, num_classes, num_training_points):
         raise Exception("Choose valid model architecture!")
     feature_extractor.add(Dense(config["model"]["num_output_features"], activation="relu"))
 
+    return feature_extractor
+
+
+def create_head(config, num_classes, num_training_points):
     if config["model"]["head"] == "deterministic":
         head = Sequential([
+            Dropout(rate=0.5),
             Dense(config["model"]["num_output_features"], activation="relu"),
             Dense(int(num_classes), activation="softmax")
         ])
     elif config["model"]["head"] == "bayesian":
         tfd = tfp.distributions
+        # scaling of KL divergence to batch is included already, scaling to dataset size needs to be done
         kl_divergence_function = (lambda q, p, _: tfd.kl_divergence(q, p) /  # pylint: disable=g-long-lambda
                                                   tf.cast(num_training_points, dtype=tf.float32))
         head = tf.keras.Sequential([
@@ -64,18 +85,14 @@ def create_model(config, num_classes, num_training_points):
             ),
             tf.keras.layers.Softmax()
         ])
-
-        kl_weight = np.array( config["model"]["batch_size"], np.float32) / config["model"]["num_output_features"]
+        # scaling KL divergence to batch size and dataset size
+        kl_weight = np.array(config["model"]["batch_size"], np.float32) / num_training_points
         head.add_loss(tf.reduce_mean(kl_weight * head.layers[0].submodules[5].surrogate_posterior_kl_divergence_prior()))
         head.build()
     else:
         raise Exception("Choose valid model head!")
-    model = Sequential([feature_extractor, head])
-    model.compile(optimizer='adam',
-                  loss=['categorical_crossentropy'],
-                  metrics=['accuracy'])
 
-    return model
+    return head
 
 
 class RBFKernelFn(tf.keras.layers.Layer):
