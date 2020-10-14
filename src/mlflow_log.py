@@ -51,7 +51,7 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
     def save(self):
         save_dir = os.path.join(self.config["data"]["artifact_dir"], "models")
         name = self.config["model"]["save_name"]
-        os.makedirs(os.path.dirname(save_dir), exist_ok=True)
+        os.makedirs(save_dir, exist_ok=True)
         fe_path = os.path.join(save_dir, name + "_feature_extractor.h5")
         head_path = os.path.join(save_dir, name + "_head.h5")
         self.model.layers[0].save(fe_path)
