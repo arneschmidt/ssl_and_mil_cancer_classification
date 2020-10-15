@@ -55,7 +55,7 @@ def create_head(config, num_classes, num_training_points):
     head_type = config["model"]["head"]["type"]
     if head_type == "deterministic":
         hidden_units = config["model"]["head"]["deterministic"]["number_hidden_units"]
-        dropout_rate = config["model"]["head"]["deterministic"]["dropout_rate"]
+        dropout_rate = config["model"]["head"]["deterministic"]["dropout"]
         head = Sequential()
         head.add(Dropout(rate=dropout_rate))
         if hidden_units > 0 :
@@ -76,7 +76,7 @@ def create_head(config, num_classes, num_training_points):
                                                bias_divergence_fn=kl_divergence_function, activation="softmax"),
         ])
     elif head_type == "gp":
-        num_inducing_points = config["model"]["gp"]["inducing_points"]
+        num_inducing_points = config["model"]["head"]["gp"]["inducing_points"]
         head = tf.keras.Sequential([
             tf.keras.layers.Input(shape=[config["model"]["num_output_features"]]), #, batch_size=config["model"]["batch_size"]),
             tfp.layers.VariationalGaussianProcess(
