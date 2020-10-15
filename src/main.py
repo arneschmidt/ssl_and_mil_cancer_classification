@@ -48,7 +48,11 @@ def config_update(orig_dict, new_dict):
     return orig_dict
 
 if __name__ == "__main__":
-    with open(r'./config.yaml') as file:
+    parser = argparse.ArgumentParser(description="Cancer Classification")
+    parser.add_argument("--config", "-m", type=str, default="./config.yaml",
+                        help="Config path (yaml file expected).")
+    args = parser.parse_args()
+    with open(args.config) as file:
         config = yaml.full_load(file)
     with open(config["dataset_config"]) as file:
         config_data_dependent = yaml.full_load(file)

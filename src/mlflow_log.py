@@ -13,6 +13,9 @@ class MLFlowLogger:
     def config_logging(self):
         mlflow.log_params(self.config['model'])
         mlflow.log_params(self.config['data'])
+        head_type = self.config['model']['head']['type']
+        mlflow.log_param('head_type', head_type)
+        mlflow.log_params(self.config['model']['head'][head_type])
 
     def test_logging(self, metrics: Dict):
         mlflow.log_metrics(metrics)

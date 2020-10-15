@@ -45,31 +45,38 @@ def create_feature_extactor(config):
         feature_extractor.add(GlobalAveragePooling2D())
     else:
         raise Exception("Choose valid model architecture!")
-    feature_extractor.add(Dense(config["model"]["num_output_features"], activation="relu"))
+    if config["model"]["num_output_features"] > 0:
+        feature_extractor.add(Dense(config["model"]["num_output_features"], activation="relu"))
 
     return feature_extractor
 
 
 def create_head(config, num_classes, num_training_points):
-    if config["model"]["head"] == "deterministic":
-        head = Sequential([
-            Dropout(rate=0.5),
-            Dense(config["model"]["num_output_features"], activation="relu"),
-            Dense(int(num_classes), activation="softmax")
-        ])
-    elif config["model"]["head"] == "bayesian":
+    head_type = config["model"]["head"]["type"]
+    if head_type == "deterministic":
+        hidden_units = config["model"]["head"]["deterministic"]["number_hidden_units"]
+        dropout_rate = config["model"]["head"]["deterministic"]["dropout_rate"]
+        head = Sequential()
+        head.add(Dropout(rate=dropout_rate))
+        if hidden_units > 0 :
+            head.add(Dense(hidden_units, activation="relu"))
+        head.add(Dense(int(num_classes), activation="softmax"))
+
+    elif head_type == "bnn":
+        number_hidden_units = config["model"]["head"]["bnn"]["number_hidden_units"]
+        kl_factor = config["model"]["head"]["bnn"]["kl_loss_factor"]
         tfd = tfp.distributions
         # scaling of KL divergence to batch is included already, scaling to dataset size needs to be done
-        kl_divergence_function = (lambda q, p, _: tfd.kl_divergence(q, p) /  # pylint: disable=g-long-lambda
+        kl_divergence_function = (lambda q, p, _: tfd.kl_divergence(q, p)* kl_factor /  # pylint: disable=g-long-lambda
                                                   tf.cast(num_training_points, dtype=tf.float32))
         head = tf.keras.Sequential([
-            tfp.layers.DenseReparameterization(units=config["model"]["num_output_features"], kernel_divergence_fn=kl_divergence_function,
+            tfp.layers.DenseReparameterization(units=number_hidden_units, kernel_divergence_fn=kl_divergence_function,
                                                bias_divergence_fn=kl_divergence_function, activation=tf.nn.relu),
             tfp.layers.DenseReparameterization(units=int(num_classes) ,kernel_divergence_fn=kl_divergence_function,
                                                bias_divergence_fn=kl_divergence_function, activation="softmax"),
         ])
-    elif config["model"]["head"] == "gp":
-        num_inducing_points = 50
+    elif head_type == "gp":
+        num_inducing_points = config["model"]["gp"]["inducing_points"]
         head = tf.keras.Sequential([
             tf.keras.layers.Input(shape=[config["model"]["num_output_features"]]), #, batch_size=config["model"]["batch_size"]),
             tfp.layers.VariationalGaussianProcess(
@@ -118,6 +125,6 @@ class RBFKernelFn(tf.keras.layers.Layer):
     @property
     def kernel(self):
         return tfp.math.psd_kernels.ExponentiatedQuadratic(
-            amplitude=tf.nn.softplus(0.1 * self._amplitude),
-            length_scale=tf.nn.softplus(5. * self._length_scale)
+            amplitude=tf.nn.softplus(1.0 * self._amplitude), # 0.1
+            length_scale=tf.nn.softplus(1.0 * self._length_scale) # 5.
         )

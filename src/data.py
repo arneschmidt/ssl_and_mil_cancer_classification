@@ -21,8 +21,9 @@ class DataGenerator():
     def data_generator_from_dataframe(self, dataframe: pd.DataFrame, image_augmentation=False):
         if image_augmentation:
             datagen = ImageDataGenerator(
+                brightness_range=[0.9, 1.1],
                 shear_range=0.2,
-                zoom_range=0.2,
+                zoom_range=0.0,
                 horizontal_flip=True,
                 vertical_flip=True)
         else:

@@ -55,10 +55,10 @@ class ClassficationModel:
         model_path = os.path.join(artifact_path, "models")
         feature_extractor = tf.keras.models.load_model(os.path.join(model_path, name + "_feature_extractor.h5"))
         head = tf.keras.models.load_model(os.path.join(model_path, name + "_head.h5"))
-        model = tf.keras.models.Sequential([self.feature_extractor, self.head])
+        model = tf.keras.models.Sequential([feature_extractor, head])
         model.compile(
             loss='categorical_crossentropy',
-            optimizer=tf.keras.optimizers.Adam(0.01),  # TODO move to config
+            optimizer=tf.keras.optimizers.Adam(self.config["model"]["learning_rate"]),
             metrics=['accuracy'],
         )
         model.summary()
