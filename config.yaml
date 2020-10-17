@@ -1,6 +1,6 @@
 # This is the main config. Parameters are update and possibly overwritten by dataset dependent configs.
 model:
-  mode: train # "train", "test", "predict"
+  mode: test # "train", "test", "predict"
   batch_size: 16
   epochs: 10
   learning_rate: 0.001
@@ -9,7 +9,7 @@ model:
   feature_extractor: simple_cnn # "simple_cnn", "mobilenetv2", "resnet50", "efficientnetb0", "efficientnetb1"
   num_output_features: 0 # feature dimension of feature extractor output, set to 0 to skip this layer
   head:
-    type: gp # deterministic, gp, bnn
+    type: deterministic # deterministic, gp, bnn
     deterministic:
       dropout: 0.2
       number_hidden_units: 0 # feature dimension of hidden layer, set to 0 to skip this layer
@@ -24,6 +24,6 @@ model:
 dataset_config: ./dataset_dependent/sicapv2/config.yaml
 
 logging:
-  log_experiment: False
+  log_experiment: True
   run_name: test
   tracking_url: /home/arne/projects/mlruns

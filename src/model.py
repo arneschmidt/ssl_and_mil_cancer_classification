@@ -1,6 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 import tensorflow as tf
+import tensorflow_addons as tfa
 import tensorflow_probability as tfp
 import numpy as np
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
@@ -18,10 +19,11 @@ class ClassficationModel:
         self.batch_size = config["model"]["batch_size"]
         self.num_classes = num_classes
         self.config = config
+        self.model = create_model(config, self.num_classes, n_training_points)
         if config["model"]["load_name"] != "None":
-            self.model = self._load_combined_model(config["data"]["artifact_dir"], config["model"]["load_name"])
-        else:
-            self.model = create_model(config, self.num_classes, n_training_points)
+            self._load_combined_model(config["data"]["artifact_dir"], config["model"]["load_name"])
+        self._compile_model()
+
         print(self.model.summary())
 
     def train(self, train_data_generator, val_data_generator):
@@ -33,7 +35,7 @@ class ClassficationModel:
         self.model.fit(
             train_data_generator,
             epochs=self.config["model"]["epochs"],
-            steps_per_epoch=steps_per_epoch,
+            steps_per_epoch= steps_per_epoch,
             callbacks=[callbacks],
             validation_data=val_data_generator
         )
@@ -44,6 +46,11 @@ class ClassficationModel:
             steps=test_data_generator.n / self.batch_size,
             return_dict=True
         )
+        metrics['f1_mean'] = np.mean(metrics['f1_score'])
+        for class_id in range(self.num_classes):
+            key = 'f1_class_id_' + str(class_id)
+            metrics[key] = metrics['f1_score'][class_id]
+        metrics.pop('f1_score')
         return metrics
 
     def predict(self, test_data_generator, output_dir):
@@ -51,18 +58,20 @@ class ClassficationModel:
         predictions = self.model.predict(image_batch[0], steps=1)
         self._save_predictions(image_batch, predictions, output_dir)
 
+    def _compile_model(self):
+        self.model.compile(optimizer='adam',
+                           loss=['categorical_crossentropy'],
+                           metrics=['accuracy',
+                                    tf.keras.metrics.Precision(),
+                                    tf.keras.metrics.Recall(),
+                                    tfa.metrics.F1Score(num_classes=self.num_classes),
+                                    tfa.metrics.CohenKappa(num_classes=self.num_classes)])
+
     def _load_combined_model(self, artifact_path: str = "./models/", name: str = "cnn"):
         model_path = os.path.join(artifact_path, "models")
-        feature_extractor = tf.keras.models.load_model(os.path.join(model_path, name + "_feature_extractor.h5"))
-        head = tf.keras.models.load_model(os.path.join(model_path, name + "_head.h5"))
-        model = tf.keras.models.Sequential([feature_extractor, head])
-        model.compile(
-            loss='categorical_crossentropy',
-            optimizer=tf.keras.optimizers.Adam(self.config["model"]["learning_rate"]),
-            metrics=['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall()],
-        )
-        model.summary()
-        return model
+        self.model.layers[0].load_weights(os.path.join(model_path, name + "_feature_extractor.h5"))
+        self.model.layers[1].load_weights(os.path.join(model_path, name + "_head.h5"))
+        self.model.summary()
 
     def _save_predictions(self, image_batch, predictions, output_dir):
         for i in range(image_batch[0].shape[0]):

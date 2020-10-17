@@ -119,9 +119,11 @@ dependencies:
     - tenacity==6.2.0
     - tensorboard==2.3.0
     - tensorflow==2.3.0
+    - tensorflow-addons==0.11.2
     - tensorflow-estimator==2.3.0
     - tensorflow-gpu==2.3.0
     - tensorflow-probability==0.11.1
+    - typeguard==2.9.1
     - websocket-client==0.57.0
     - xlrd==1.2.0
 prefix: /home/arne/miniconda3/envs/tensorflow_2_3
