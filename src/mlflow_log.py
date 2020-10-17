@@ -13,6 +13,9 @@ class MLFlowLogger:
     def config_logging(self):
         mlflow.log_params(self.config['model'])
         mlflow.log_params(self.config['data'])
+        head_type = self.config['model']['head']['type']
+        mlflow.log_param('head_type', head_type)
+        mlflow.log_params(self.config['model']['head'][head_type])
 
     def test_logging(self, metrics: Dict):
         mlflow.log_metrics(metrics)
@@ -41,17 +44,19 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
         if logs["val_accuracy"] > self.best_result:
             print("\n New best model! Saving model..")
             self.best_result = logs["val_accuracy"]
-            self.save()
+            if self.config["model"]["save_name"] != "None":
+                self.save()
             mlflow.log_metric("best_val_accuracy", logs["val_accuracy"])
             mlflow.log_metric("saved_model_epoch", self.finished_epochs)
 
         mlflow.log_metrics(metrics_dict, step=current_step)
         mlflow.log_metric('finished_epochs', self.finished_epochs, step=current_step)
 
+    # TODO: fix save bug for gp and bnn head
     def save(self):
         save_dir = os.path.join(self.config["data"]["artifact_dir"], "models")
         name = self.config["model"]["save_name"]
-        os.makedirs(os.path.dirname(save_dir), exist_ok=True)
+        os.makedirs(save_dir, exist_ok=True)
         fe_path = os.path.join(save_dir, name + "_feature_extractor.h5")
         head_path = os.path.join(save_dir, name + "_head.h5")
         self.model.layers[0].save(fe_path)

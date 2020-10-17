@@ -4,8 +4,10 @@ This is a repo to trian and test deep learning models for cancer classification.
 ## Usage
 To make this code run on your machine you need to:
 * download dataset (see dataset_dependent folders READMEs)
-* set up a virtual environment and activate it
-* pip install the requirements: `pip install -r requirements.txt`
-* Run the network: 
-    * To see the usage options `python src/main.py -h`
-    * please make sure you define the correct dataset path
+* install miniconda: https://docs.anaconda.com/anaconda/install/linux/ 
+* set up a conda environment and activate it:
+    * conda env create --file environment.yaml
+    * conda activate tensorlfow_2_3
+* (optional): edit config.yaml to modify settings
+* run the program:
+    * python ./src/main.py

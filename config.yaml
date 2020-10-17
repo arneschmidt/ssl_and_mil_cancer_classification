@@ -1,10 +1,25 @@
 # This is the main config. Parameters are update and possibly overwritten by dataset dependent configs.
 model:
-  mode: train
-  architecture: simple_cnn
-  num_output_features: 16
+  mode: train # "train", "test", "predict"
   batch_size: 16
   epochs: 10
+  learning_rate: 0.001
+  load_name: None
+  save_name: None
+  feature_extractor: simple_cnn # "simple_cnn", "mobilenetv2", "resnet50", "efficientnetb0", "efficientnetb1"
+  num_output_features: 0 # feature dimension of feature extractor output, set to 0 to skip this layer
+  head:
+    type: gp # deterministic, gp, bnn
+    deterministic:
+      dropout: 0.2
+      number_hidden_units: 0 # feature dimension of hidden layer, set to 0 to skip this layer
+    gp:
+      inducing_points: 200
+    bnn:
+      number_hidden_units: 1000
+      kl_loss_factor: 1
+
+
 
 dataset_config: ./dataset_dependent/sicapv2/config.yaml
 
