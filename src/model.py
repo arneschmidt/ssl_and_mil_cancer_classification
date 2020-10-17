@@ -59,7 +59,7 @@ class ClassficationModel:
         model.compile(
             loss='categorical_crossentropy',
             optimizer=tf.keras.optimizers.Adam(self.config["model"]["learning_rate"]),
-            metrics=['accuracy'],
+            metrics=['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall()],
         )
         model.summary()
         return model

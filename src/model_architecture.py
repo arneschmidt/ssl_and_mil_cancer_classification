@@ -77,8 +77,11 @@ def create_head(config, num_classes, num_training_points):
         ])
     elif head_type == "gp":
         num_inducing_points = config["model"]["head"]["gp"]["inducing_points"]
+        features = config["model"]["num_output_features"]
+        if features < 1:
+            raise Exception('Please set the num_output_features > 0 when using Gaussian processes.')
         head = tf.keras.Sequential([
-            tf.keras.layers.Input(shape=[config["model"]["num_output_features"]]), #, batch_size=config["model"]["batch_size"]),
+            tf.keras.layers.Input(shape=[features]), #, batch_size=config["model"]["batch_size"]),
             tfp.layers.VariationalGaussianProcess(
                 num_inducing_points=num_inducing_points,
                 kernel_provider=RBFKernelFn(),

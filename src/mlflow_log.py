@@ -52,6 +52,7 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
         mlflow.log_metrics(metrics_dict, step=current_step)
         mlflow.log_metric('finished_epochs', self.finished_epochs, step=current_step)
 
+    # TODO: fix save bug for gp and bnn head
     def save(self):
         save_dir = os.path.join(self.config["data"]["artifact_dir"], "models")
         name = self.config["model"]["save_name"]

@@ -3,13 +3,13 @@ model:
   mode: train # "train", "test", "predict"
   batch_size: 16
   epochs: 10
-  learning_rate: 0.01
+  learning_rate: 0.001
   load_name: None
   save_name: None
-  feature_extractor: efficientnetb0 # "simple_cnn", "mobilenetv2", "resnet50", "efficientnetb0", "efficientnetb1"
+  feature_extractor: simple_cnn # "simple_cnn", "mobilenetv2", "resnet50", "efficientnetb0", "efficientnetb1"
   num_output_features: 0 # feature dimension of feature extractor output, set to 0 to skip this layer
   head:
-    type: deterministic # deterministic, gp, bnn
+    type: gp # deterministic, gp, bnn
     deterministic:
       dropout: 0.2
       number_hidden_units: 0 # feature dimension of hidden layer, set to 0 to skip this layer
