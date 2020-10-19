@@ -45,12 +45,12 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
         mlflow.log_metric('finished_epochs', self.finished_epochs, step=current_step)
 
         # Check if new best model
-        if logs["val_accuracy"] > self.best_result:
+        if metrics_dict["val_f1_mean"] > self.best_result:
             print("\n New best model! Saving model..")
-            self.best_result = logs["val_accuracy"]
+            self.best_result = metrics_dict["val_f1_mean"]
             if self.config["model"]["save_name"] != "None":
                 self._save_model()
-            mlflow.log_metric("best_val_accuracy", logs["val_accuracy"])
+            mlflow.log_metric("best_val_f1_mean", metrics_dict["val_f1_mean"])
             mlflow.log_metric("saved_model_epoch", self.finished_epochs)
 
     def _format_metrics_for_mlflow(self, logs):
