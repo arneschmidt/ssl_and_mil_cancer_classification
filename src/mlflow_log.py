@@ -59,5 +59,5 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
         os.makedirs(save_dir, exist_ok=True)
         fe_path = os.path.join(save_dir, name + "_feature_extractor.h5")
         head_path = os.path.join(save_dir, name + "_head.h5")
-        self.model.layers[0].save(fe_path)
-        self.model.layers[1].save(head_path)
+        self.model.layers[0].save_weights(fe_path)
+        self.model.layers[1].save_weights(head_path)

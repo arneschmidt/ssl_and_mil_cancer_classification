@@ -5,8 +5,5 @@ data:
   artifact_dir: ./dataset_dependent/sicapv2
   image_target_size: [250, 250]
 
-model:
-  load_name: None
-  save_name: test
 
 

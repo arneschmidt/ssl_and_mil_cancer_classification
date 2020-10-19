@@ -15,10 +15,6 @@ def create_model(config, num_classes, num_training_points):
     head = create_head(config, num_classes, num_training_points)
 
     model = Sequential([feature_extractor, head])
-    model.compile(optimizer='adam',
-                  loss=['categorical_crossentropy'],
-                  metrics=['accuracy'])
-
     return model
 
 def create_feature_extactor(config):
