@@ -11,6 +11,7 @@ from tensorflow.keras.layers import Dense, Conv2D, Dropout, MaxPool2D, Flatten, 
 from tensorflow.keras.callbacks import ModelCheckpoint
 from mlflow_log import MLFlowCallback
 from model_architecture import create_model
+from sklearn.utils import class_weight
 
 
 class ClassficationModel:
@@ -31,10 +32,23 @@ class ClassficationModel:
             callbacks = [MLFlowCallback(self.config)]
         else:
             callbacks = []
+
+        if self.config["model"]["class_weighted_loss"]:
+            class_weights_array = class_weight.compute_class_weight(
+                class_weight='balanced',
+                classes=np.unique(train_data_generator.classes),
+                y=train_data_generator.classes)
+            class_weights = {}
+            for class_id in train_data_generator.class_indices.values():
+                class_weights[class_id] = class_weights_array[class_id]
+        else:
+            class_weights = None
+
         steps_per_epoch = int(self.n_training_points / train_data_generator.batch_size)
         self.model.fit(
             train_data_generator,
             epochs=self.config["model"]["epochs"],
+            class_weight=class_weights,
             steps_per_epoch= steps_per_epoch,
             callbacks=[callbacks],
             validation_data=val_data_generator
@@ -59,6 +73,9 @@ class ClassficationModel:
         self._save_predictions(image_batch, predictions, output_dir)
 
     def _compile_model(self):
+        input_shape = (self.batch_size, self.config["data"]["image_target_size"][0],
+                       self.config["data"]["image_target_size"][1], 3)
+        self.model.build(input_shape)
         self.model.compile(optimizer='adam',
                            loss=['categorical_crossentropy'],
                            metrics=['accuracy',

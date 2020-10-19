@@ -2,6 +2,7 @@ from typing import Dict
 import mlflow
 import tensorflow
 import os
+import numpy as np
 
 class MLFlowLogger:
     def __init__(self, config: Dict):
@@ -12,6 +13,7 @@ class MLFlowLogger:
 
     def config_logging(self):
         mlflow.log_params(self.config['model'])
+        mlflow.log_params(self.config['model']['feature_extractor'])
         mlflow.log_params(self.config['data'])
         head_type = self.config['model']['head']['type']
         mlflow.log_param('head_type', head_type)
@@ -31,29 +33,38 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
     def on_batch_end(self, batch: int, logs=None):
         if batch % 100 == 0:
             current_step = (self.finished_epochs * self.params['steps']) + batch
-            mlflow.log_metric('train_accuracy', logs.get('accuracy'), step=current_step)
-            mlflow.log_metric('train_loss', logs.get('loss'), step=current_step)
+            metrics_dict = self._format_metrics_for_mlflow(logs)
+            mlflow.log_metrics(metrics_dict)
 
     def on_epoch_end(self, epoch: int, logs=None):
         self.finished_epochs = epoch + 1
         current_step = self.finished_epochs * self.params['steps']
 
-        metrics_dict = {"val_loss": logs["val_loss"], "val_accuracy": logs["val_accuracy"]}
+        metrics_dict = self._format_metrics_for_mlflow(logs)
+        mlflow.log_metrics(metrics_dict, step=current_step)
+        mlflow.log_metric('finished_epochs', self.finished_epochs, step=current_step)
 
         # Check if new best model
         if logs["val_accuracy"] > self.best_result:
             print("\n New best model! Saving model..")
             self.best_result = logs["val_accuracy"]
             if self.config["model"]["save_name"] != "None":
-                self.save()
+                self._save_model()
             mlflow.log_metric("best_val_accuracy", logs["val_accuracy"])
             mlflow.log_metric("saved_model_epoch", self.finished_epochs)
 
-        mlflow.log_metrics(metrics_dict, step=current_step)
-        mlflow.log_metric('finished_epochs', self.finished_epochs, step=current_step)
+    def _format_metrics_for_mlflow(self, logs):
+        mlflow_dict = logs.copy()
+        f1_score = mlflow_dict.pop('f1_score')
+        mlflow_dict['f1_mean'] = np.mean(f1_score)
+        if 'val_f1_score' in mlflow_dict.keys():
+            f1_score = mlflow_dict.pop('val_f1_score')
+            mlflow_dict['val_f1_mean'] = np.mean(f1_score)
+
+        return mlflow_dict
 
     # TODO: fix save bug for gp and bnn head
-    def save(self):
+    def _save_model(self):
         save_dir = os.path.join(self.config["data"]["artifact_dir"], "models")
         name = self.config["model"]["save_name"]
         os.makedirs(save_dir, exist_ok=True)
