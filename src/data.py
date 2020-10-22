@@ -2,7 +2,6 @@ import os
 import pandas as pd
 import numpy as np
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from typing import Dict, Optional, Tuple
 
 # TODO: add multiple instance learning setting
 class DataGenerator():

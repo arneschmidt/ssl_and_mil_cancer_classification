@@ -2,6 +2,8 @@ data:
   dataset_name: sicapv2
   dir: /home/arne/datasets/SICAPv2/images/
   data_split_dir: /home/arne/datasets/SICAPv2/partition/Validation/Val1/
+#  dir: /data/SICAPv2/images/
+#  data_split_dir: /data/SICAPv2/partition/Validation/Val1
   artifact_dir: ./dataset_dependent/sicapv2
   image_target_size: [250, 250]
 
