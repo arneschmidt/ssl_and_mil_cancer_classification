@@ -7,7 +7,7 @@ from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 from tensorflow.keras.applications.efficientnet import EfficientNetB0, EfficientNetB1
 from tensorflow.keras.applications.resnet50 import ResNet50
 from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import Dense, Conv2D, Dropout, MaxPool2D, Flatten, GlobalMaxPool2D, SeparableConv2D
+from tensorflow.keras.layers import Dense, Conv2D, Dropout, MaxPool2D, Flatten, GlobalMaxPool1D, GlobalMaxPool2D, SeparableConv2D
 
 
 def create_model(config, num_classes, num_training_points):
@@ -48,6 +48,7 @@ def create_feature_extactor(config):
         feature_extractor.add(MaxPool2D(strides=(2, 2)))
         feature_extractor.add(Conv2D(512, kernel_size=3, activation='relu'))
         feature_extractor.add(MaxPool2D(strides=(2, 2)))
+        # feature_extractor.add(Flatten())
     else:
         raise Exception("Choose valid model architecture!")
 
@@ -127,7 +128,7 @@ def create_head(config, num_classes, num_training_points):
         ])
         # scaling KL divergence to batch size and dataset size
         kl_weight = np.array(config["model"]["batch_size"], np.float32) / num_training_points
-        head.add_loss(tf.reduce_mean(kl_weight * head.layers[0].submodules[5].surrogate_posterior_kl_divergence_prior()))
+        head.add_loss(tf.reduce_sum(kl_weight * head.layers[0].submodules[5].surrogate_posterior_kl_divergence_prior()))
         head.build()
     else:
         raise Exception("Choose valid model head!")

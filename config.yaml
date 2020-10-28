@@ -1,9 +1,9 @@
 # This is the main config. Parameters are update and possibly overwritten by dataset dependent configs.
 model:
   mode: train # "train", "test", "predict"
-  batch_size: 16
+  batch_size: 32
   epochs: 20
-  learning_rate: 0.001
+  learning_rate: 0.01
   class_weighted_loss: True
   load_name: None
   save_name: fsconv
@@ -11,7 +11,7 @@ model:
     type: fsconv # "fsconv", "simple_cnn", "mobilenetv2", "resnet50", "efficientnetb0", "efficientnetb1"
     global_max_pooling: True
     num_output_features: 0 # feature dimension of feature extractor output, set to 0 to skip this layer
-    output_activation: None # sigmoid, relu
+    output_activation: sigmoid # sigmoid, relu
   head:
     type: deterministic # deterministic, gp, bnn
     deterministic:
