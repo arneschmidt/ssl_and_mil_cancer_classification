@@ -76,7 +76,12 @@ class ClassficationModel:
         input_shape = (self.batch_size, self.config["data"]["image_target_size"][0],
                        self.config["data"]["image_target_size"][1], 3)
         self.model.build(input_shape)
-        self.model.compile(optimizer=tf.optimizers.Adam(learning_rate=self.config["model"]["learning_rate"]),
+
+        if self.config['model']['optimizer'] == 'sgd':
+            optimizer = tf.optimizers.SGD(learning_rate=self.config["model"]["learning_rate"])
+        else:
+            optimizer = tf.optimizers.Adam(learning_rate=self.config["model"]["learning_rate"])
+        self.model.compile(optimizer=optimizer,
                            loss=['categorical_crossentropy'],
                            metrics=['accuracy',
                                     tf.keras.metrics.Precision(),

@@ -1,8 +1,9 @@
 # This is the main config. Parameters are update and possibly overwritten by dataset dependent configs.
 model:
   mode: train # "train", "test", "predict"
-  batch_size: 32
+  batch_size: 16
   epochs: 20
+  optimizer: sgd
   learning_rate: 0.01
   class_weighted_loss: True
   load_name: None

@@ -50,7 +50,6 @@ def create_feature_extactor(config):
         feature_extractor.add(MaxPool2D(strides=(2, 2)))
         feature_extractor.add(Conv2D(512, kernel_size=3, activation='relu'))
         feature_extractor.add(MaxPool2D(strides=(2, 2)))
-        # feature_extractor.add(Flatten())
     else:
         raise Exception("Choose valid model architecture!")
 
