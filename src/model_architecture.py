@@ -13,7 +13,7 @@ from tensorflow.keras.layers import Dense, Conv2D, Dropout, MaxPool2D, Flatten, 
 def create_model(config, num_classes, num_training_points):
     feature_extractor = create_feature_extactor(config)
     head = create_head(config, num_classes, num_training_points)
-
+    
     model = Sequential([feature_extractor, head])
     return model
 

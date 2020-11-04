@@ -1,6 +1,6 @@
 data:
   dataset_name: sicapv2
-  dir: /home/arne/datasets/SICAPv2/images/
+  dir: /home/arne/datasets/SICAPv2/
   data_split_dir: /home/arne/datasets/SICAPv2/partition/Validation/Val1/
 #  dir: /data/SICAPv2/images/
 #  data_split_dir: /data/SICAPv2/partition/Validation/Val1

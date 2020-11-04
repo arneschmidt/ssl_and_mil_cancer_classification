@@ -17,10 +17,10 @@ def main(config):
 
     print("Create data generators..")
     data_gen = DataGenerator(config["data"], config["model"]["batch_size"])
-    train_data, val_data, test_data = data_gen.generate_data()
+    train_data, val_data, test_data = data_gen.train_generator, data_gen.validation_generator, data_gen.test_generator
 
     print("Load classification model")
-    num_classes = len(train_data.class_indices.values())
+    num_classes = data_gen.num_classes
     classification_model = ClassficationModel(config, num_classes, train_data.n)
 
     if config["model"]["mode"] == "train":
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     with open(args.config) as file:
         config = yaml.full_load(file)
-    with open(config["dataset_config"]) as file:
+    with open(config["data"]["dataset_config"]) as file:
         config_data_dependent = yaml.full_load(file)
 
     config = config_update(config, config_data_dependent)

@@ -3,7 +3,7 @@ model:
   mode: train # "train", "test", "predict"
   batch_size: 16
   epochs: 20
-  learning_rate: 0.001
+  learning_rate: 0.01
   class_weighted_loss: True
   load_name: None
   save_name: fsconv
@@ -23,8 +23,10 @@ model:
       number_hidden_units: 100
       kl_loss_factor: 1
 
-
-dataset_config: ./dataset_dependent/sicapv2/config.yaml
+data:
+  dataset_config: ./dataset_dependent/sicapv2/config.yaml
+  supervision: mil # 'full', 'mil'
+  positive_instance_labels_per_bag: 0
 
 logging:
   log_experiment: True

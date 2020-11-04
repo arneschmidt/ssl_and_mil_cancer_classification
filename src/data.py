@@ -2,21 +2,23 @@ import os
 import pandas as pd
 import numpy as np
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from random import sample
+from utils.sicapv2_utils import extract_sicap_df_info
 
 # TODO: add multiple instance learning setting
 class DataGenerator():
     def __init__(self, data_config, batch_size):
         self.data_config = data_config
         self.batch_size = batch_size
-
-    def generate_data(self):
         train_df, val_df, test_df = self.load_dataframes()
+        self.train_df = train_df
+        self.val_df = val_df
+        self.test_df = test_df
 
-        train_generator = self.data_generator_from_dataframe(train_df, image_augmentation=True)
-        validation_generator = self.data_generator_from_dataframe(val_df, image_augmentation=False)
-        test_generator = self.data_generator_from_dataframe(test_df, image_augmentation=False)
-
-        return train_generator, validation_generator, test_generator
+        self.train_generator = self.data_generator_from_dataframe(train_df, image_augmentation=True)
+        self.validation_generator = self.data_generator_from_dataframe(val_df, image_augmentation=False)
+        self.test_generator = self.data_generator_from_dataframe(test_df, image_augmentation=False)
+        self.num_classes = self.get_num_classes()
 
     def data_generator_from_dataframe(self, dataframe: pd.DataFrame, image_augmentation=False):
         if image_augmentation:
@@ -50,19 +52,17 @@ class DataGenerator():
             test_df["class"] = test_df["image_path"].str.extract("class(\d+)").astype(str)
         elif self.data_config["dataset_name"] == "sicapv2":
             train_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Train.xlsx"))
-            train_df = self.extract_sicap_df_info(train_df_raw)
+            train_df = extract_sicap_df_info(train_df_raw, self.data_config)
             val_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Test.xlsx"))
-            val_df = self.extract_sicap_df_info(val_df_raw)
+            val_df = extract_sicap_df_info(val_df_raw, self.data_config)
             test_df = val_df
         else:
             Exception("Please choose valid dataset name!")
         return train_df, val_df, test_df
 
-    def extract_sicap_df_info(self, dataframe_raw):
-        # Notice: class 0 = NC, class 1 = G3, class 2 = G4, class 3 = G5
-        dataframe = pd.DataFrame()
-        dataframe["image_path"] = dataframe_raw["image_name"]
-        dataframe["class"] = np.argmax([dataframe_raw["NC"], dataframe_raw["G3"], dataframe_raw["G4"], dataframe_raw["G5"]],
-                                       axis=0).astype(str)
-        return dataframe
-
+    def get_num_classes(self):
+        num_classes = len(self.train_generator.class_indices.values())
+        # if we are in the mil setting, one class means unlabeled and is not a real class
+        if self.data_config['supervision'] == 'mil':
+            num_classes = num_classes-1
+        return num_classes
