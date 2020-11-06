@@ -12,9 +12,10 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 from mlflow_log import MLFlowCallback
 from model_architecture import create_model
 from sklearn.utils import class_weight
+from utils.mil_utils import combine_pseudo_labels_with_instance_labels
 
 
-class ClassficationModel:
+class MILModel:
     def __init__(self, config, num_classes, n_training_points):
         self.n_training_points = n_training_points
         self.batch_size = config["model"]["batch_size"]
@@ -27,32 +28,25 @@ class ClassficationModel:
 
         print(self.model.summary())
 
-    def train(self, train_data_generator, val_data_generator):
-        if self.config["logging"]["log_experiment"]:
-            callbacks = [MLFlowCallback(self.config)]
-        else:
-            callbacks = []
+    def train(self, data_gen):
+        for epoch in range(self.config["model"]["epochs"]):
+            train_generator_weak_aug = data_gen.train_generator_weak_aug
+            steps = int(self.n_training_points / train_generator_weak_aug.batch_size)
+            predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps)
+            training_targets = combine_pseudo_labels_with_instance_labels(predictions, data_gen)
 
-        if self.config["model"]["class_weighted_loss"]:
-            class_weights_array = class_weight.compute_class_weight(
-                class_weight='balanced',
-                classes=np.unique(train_data_generator.classes),
-                y=train_data_generator.classes)
-            class_weights = {}
-            for class_id in train_data_generator.class_indices.values():
-                class_weights[class_id] = class_weights_array[class_id]
-        else:
-            class_weights = None
-
-        steps_per_epoch = int(self.n_training_points / train_data_generator.batch_size)
-        self.model.fit(
-            train_data_generator,
-            epochs=self.config["model"]["epochs"],
-            class_weight=class_weights,
-            steps_per_epoch= steps_per_epoch,
-            callbacks=[callbacks],
-            validation_data=val_data_generator
-        )
+            train_generator_string_aug = data_gen.train_generator_strong_aug
+            train_generator_string_aug.labels = training_targets
+            steps_per_epoch = int(self.n_training_points / train_generator_string_aug.batch_size)
+            self.model.fit(
+                train_generator_string_aug,
+                epochs=1,
+                # class_weight=class_weights,
+                initial_epoch=epoch,
+                steps_per_epoch= steps_per_epoch,
+                # callbacks=[callbacks],
+                # validation_data=val_data_generator
+            )
 
     def test(self, test_data_generator):
         metrics = self.model.evaluate(
@@ -78,11 +72,11 @@ class ClassficationModel:
         self.model.build(input_shape)
         self.model.compile(optimizer='adam',
                            loss=['categorical_crossentropy'],
-                           metrics=['accuracy',
-                                    tf.keras.metrics.Precision(),
-                                    tf.keras.metrics.Recall(),
-                                    tfa.metrics.F1Score(num_classes=self.num_classes),
-                                    tfa.metrics.CohenKappa(num_classes=self.num_classes)])
+                           metrics=['accuracy'])
+                                    # tf.keras.metrics.Precision(),
+                                    # tf.keras.metrics.Recall(),
+                                    # tfa.metrics.F1Score(num_classes=self.num_classes),
+                                    # tfa.metrics.CohenKappa(num_classes=self.num_classes)])
 
     def _load_combined_model(self, artifact_path: str = "./models/", name: str = "cnn"):
         model_path = os.path.join(artifact_path, "models")

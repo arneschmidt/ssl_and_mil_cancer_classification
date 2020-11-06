@@ -5,7 +5,8 @@ import yaml
 import tensorflow as tf
 from typing import Dict, Optional, Tuple
 from data import DataGenerator
-from model import ClassficationModel
+from supervised_model import SupervisedModel
+from mil_model import MILModel
 from mlflow_log import MLFlowLogger
 
 def main(config):
@@ -17,23 +18,25 @@ def main(config):
 
     print("Create data generators..")
     data_gen = DataGenerator(config["data"], config["model"]["batch_size"])
-    train_data, val_data, test_data = data_gen.train_generator, data_gen.validation_generator, data_gen.test_generator
 
     print("Load classification model")
     num_classes = data_gen.num_classes
-    classification_model = ClassficationModel(config, num_classes, train_data.n)
+    if config['data']['supervision'] == 'full':
+        model = SupervisedModel(config, num_classes, data_gen.num_training_samples)
+    else:
+        model = MILModel(config, num_classes, data_gen.num_training_samples)
 
     if config["model"]["mode"] == "train":
         print("Train")
-        classification_model.train(train_data, val_data)
+        model.train(data_gen)
     elif config["model"]["mode"] == "test":
         print("Test")
-        metrics = classification_model.test(test_data)
+        metrics = model.test(data_gen)
         if config["logging"]["log_experiment"]:
             logger.test_logging(metrics)
     elif config["model"]["mode"] == "predict":
         print("Predict")
-        classification_model.predict(test_data, config["data"]["artifact_dir"])
+        model.predict(data_gen, config["data"]["artifact_dir"])
 
 
 def config_update(orig_dict, new_dict):

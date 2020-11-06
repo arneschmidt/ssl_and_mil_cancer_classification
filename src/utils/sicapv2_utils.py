@@ -18,6 +18,7 @@ def extract_sicap_df_info(dataframe_raw, data_config):
 
 def adopt_dataframe_to_mil(dataframe, wsi_dataframe, num_instance_samples):
     dataframe["instance_label"] = 4 # class_id 4: unlabeled
+    dataframe["wsi"] = np.NaN
     dataframe["wsi_labels"] = np.NaN
     dataframe["wsi_labels"] = dataframe["wsi_labels"].astype(object)
     wsi_dataframe["wsi_labels"] = np.NaN
@@ -27,7 +28,7 @@ def adopt_dataframe_to_mil(dataframe, wsi_dataframe, num_instance_samples):
     for wsi_df_row in range(len(wsi_dataframe["wsi_labels"])):
         wsi_dataframe["wsi_labels"][wsi_df_row] = np.arange \
             (np.max(wsi_dataframe['wsi_max_gleason_grade'][wsi_df_row ] -1, 0))
-        if wsi_dataframe['Gleason_primary'][wsi_df_row] == wsi_dataframe['Gleason_secondary'][wsi_df_row]  == 0:
+        if wsi_dataframe['Gleason_primary'][wsi_df_row] == wsi_dataframe['Gleason_secondary'][wsi_df_row] == 0:
             negative_bag = True
         else:
             negative_bag = False
@@ -35,6 +36,7 @@ def adopt_dataframe_to_mil(dataframe, wsi_dataframe, num_instance_samples):
         secondary_gleason_grade_rows = []
         for patch_df_row in range(len(dataframe["image_path"])):
             if wsi_dataframe['slide_id'][wsi_df_row] in dataframe["image_path"][patch_df_row]:
+                dataframe["wsi"][patch_df_row] = wsi_dataframe['slide_id'][wsi_df_row]
                 dataframe["wsi_labels"][patch_df_row] = wsi_dataframe["wsi_labels"][wsi_df_row]
                 if negative_bag:
                     dataframe["instance_label"][patch_df_row] = 0
@@ -47,7 +49,7 @@ def adopt_dataframe_to_mil(dataframe, wsi_dataframe, num_instance_samples):
         if not negative_bag:
             dataframe['instance_label'][sampled_primary_rows] = dataframe['class'][sampled_primary_rows]
             dataframe['instance_label'][sampled_secondary_rows] = dataframe['class'][sampled_secondary_rows]
-    dataframe['instance_label'] = dataframe['instance_label']
+    dataframe['class'] = dataframe['instance_label']
     return dataframe
 
 def sample_or_complete_list(list, num_samples):
