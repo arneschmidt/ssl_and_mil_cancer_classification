@@ -35,11 +35,11 @@ class MILModel:
             predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps)
             training_targets = combine_pseudo_labels_with_instance_labels(predictions, data_gen)
 
-            train_generator_string_aug = data_gen.train_generator_strong_aug
-            train_generator_string_aug.labels = training_targets
-            steps_per_epoch = int(self.n_training_points / train_generator_string_aug.batch_size)
+            train_generator_strong_aug = data_gen.train_generator_strong_aug
+            train_generator_strong_aug.labels = training_targets
+            steps_per_epoch = int(self.n_training_points / train_generator_strong_aug.batch_size)
             self.model.fit(
-                train_generator_string_aug,
+                train_generator_strong_aug,
                 epochs=1,
                 # class_weight=class_weights,
                 initial_epoch=epoch,
