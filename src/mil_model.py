@@ -12,7 +12,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 from mlflow_log import MLFlowCallback
 from model_architecture import create_model
 from sklearn.utils import class_weight
-from utils.mil_utils import combine_pseudo_labels_with_instance_labels
+from utils.mil_utils import combine_pseudo_labels_with_instance_labels, get_data_generator_with_targets
 
 
 class MILModel:
@@ -36,16 +36,16 @@ class MILModel:
             training_targets = combine_pseudo_labels_with_instance_labels(predictions, data_gen)
 
             train_generator_strong_aug = data_gen.train_generator_strong_aug
-            train_generator_strong_aug.labels = training_targets
+            train_mil_generator = get_data_generator_with_targets(train_generator_strong_aug, training_targets)
             steps_per_epoch = int(self.n_training_points / train_generator_strong_aug.batch_size)
             self.model.fit(
-                train_generator_strong_aug,
+                train_mil_generator,
                 epochs=1,
                 # class_weight=class_weights,
                 initial_epoch=epoch,
                 steps_per_epoch= steps_per_epoch,
                 # callbacks=[callbacks],
-                # validation_data=val_data_generator
+                validation_data=data_gen.validation_generator
             )
 
     def test(self, test_data_generator):

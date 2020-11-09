@@ -20,11 +20,10 @@ def main(config):
     data_gen = DataGenerator(config["data"], config["model"]["batch_size"])
 
     print("Load classification model")
-    num_classes = data_gen.num_classes
     if config['data']['supervision'] == 'full':
-        model = SupervisedModel(config, num_classes, data_gen.num_training_samples)
+        model = SupervisedModel(config, data_gen.num_classes, data_gen.num_training_samples)
     else:
-        model = MILModel(config, num_classes, data_gen.num_training_samples)
+        model = MILModel(config, data_gen.num_classes, data_gen.num_training_samples)
 
     if config["model"]["mode"] == "train":
         print("Train")

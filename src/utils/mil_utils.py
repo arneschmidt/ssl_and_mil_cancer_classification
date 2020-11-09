@@ -36,3 +36,9 @@ def get_pseudo_labels(predictions, data_gen, unlabeled_index):
 def get_one_hot(targets, nb_classes):
     res = np.eye(nb_classes)[np.array(targets).reshape(-1)]
     return res.reshape(list(targets.shape)+[nb_classes])
+
+def get_data_generator_with_targets(data_generator, targets):
+    for x, y in data_generator:
+        indices = y.astype(np.int).tolist()
+        y_target = targets[indices]
+        yield x, y_target

@@ -18,9 +18,10 @@ class DataGenerator():
         self.test_df = test_df
 
         if data_config['supervision'] == 'mil':
-            self.train_generator_strong_aug = self.data_generator_from_dataframe(train_df, image_augmentation='strong')
+            self.train_generator_strong_aug = self.data_generator_from_dataframe(train_df, image_augmentation='strong',
+                                                                                 shuffle=False, target_mode='index')
             self.train_generator_weak_aug = self.data_generator_from_dataframe(train_df, image_augmentation='weak',
-                                                                               shuffle='False', class_mode=None)
+                                                                               shuffle=True, target_mode='None')
             self.num_training_samples = self.train_generator_weak_aug.n
         else:
             self.train_generator = self.data_generator_from_dataframe(train_df, image_augmentation='weak')
@@ -28,8 +29,8 @@ class DataGenerator():
         self.validation_generator = self.data_generator_from_dataframe(val_df)
         self.test_generator = self.data_generator_from_dataframe(test_df)
 
-    def data_generator_from_dataframe(self, dataframe: pd.DataFrame, image_augmentation='None', shuffle='True',
-                                      class_mode='raw'):
+    def data_generator_from_dataframe(self, dataframe: pd.DataFrame, image_augmentation='None', shuffle=True,
+                                      target_mode='class'):
         if image_augmentation == 'weak':
             datagen = ImageDataGenerator(
                 brightness_range=[0.9, 1.1],
@@ -48,12 +49,22 @@ class DataGenerator():
         else:
             datagen = ImageDataGenerator()
 
-        dataframe = self.convert_to_one_hot(dataframe)
+        if target_mode == 'class':
+            y_col = 'class'
+            class_mode = 'categorical'
+        elif target_mode == 'index':
+            y_col = 'index'
+            class_mode = 'raw'
+        else:
+            y_col = 'index'
+            class_mode = None
+
+        dataframe['index'] = dataframe.index
         generator = datagen.flow_from_dataframe(
             dataframe=dataframe,
             directory=self.data_config["dir"],
             x_col="image_path",
-            y_col="class_one_hot",
+            y_col=y_col,
             target_size=self.data_config["image_target_size"],
             batch_size=self.batch_size,
             shuffle=shuffle,
@@ -71,25 +82,10 @@ class DataGenerator():
             test_df["class"] = test_df["image_path"].str.extract("class(\d+)").astype(str)
         elif self.data_config["dataset_name"] == "sicapv2":
             train_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Train.xlsx"))
-            train_df = extract_sicap_df_info(train_df_raw, self.data_config)
+            train_df = extract_sicap_df_info(train_df_raw, self.data_config, split='train')
             val_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Test.xlsx"))
-            val_df = extract_sicap_df_info(val_df_raw, self.data_config)
-            test_df = val_df
+            val_df = extract_sicap_df_info(val_df_raw, self.data_config, split='val')
+            test_df = extract_sicap_df_info(val_df_raw, self.data_config, split='test')
         else:
             raise Exception("Please choose valid dataset name!")
         return train_df, val_df, test_df
-
-    def convert_to_one_hot(self, dataframe):
-        labels = dataframe['class']
-        if self.data_config['supervision'] == 'full':
-            class_one_hot = to_categorical(labels, num_classes=self.num_classes)
-        else:
-            class_one_hot = to_categorical(labels, num_classes=self.num_classes+1)
-            class_one_hot = class_one_hot[:, 0:self.num_classes]
-
-        dataframe["class_one_hot"] = np.NaN
-        dataframe["class_one_hot"] = dataframe["class_one_hot"].astype(object)
-        dataframe['class_one_hot'] = dataframe['class_one_hot'].astype(object)
-        for i in range(len(class_one_hot)):
-            dataframe['class_one_hot'].iloc[i] = class_one_hot[i]
-        return dataframe
