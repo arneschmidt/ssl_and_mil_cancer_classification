@@ -29,23 +29,33 @@ class MILModel:
         print(self.model.summary())
 
     def train(self, data_gen):
-        class_weights = self.config['data']['mil_class_weights']
+        if self.config["logging"]["log_experiment"]:
+            callbacks = [MLFlowCallback(self.config)]
+        else:
+            callbacks = []
+
+        if self.config["model"]["class_weighted_loss"]:
+            class_weights = self.config['data']['mil_class_weights']
+        else:
+            class_weights = None
+
+        train_generator_weak_aug = data_gen.train_generator_weak_aug
+        train_generator_strong_aug = data_gen.train_generator_strong_aug
+        steps = np.ceil(self.n_training_points / train_generator_weak_aug.batch_size)
+
         for epoch in range(self.config["model"]["epochs"]):
-            train_generator_weak_aug = data_gen.train_generator_weak_aug
-            steps = np.ceil(self.n_training_points / train_generator_weak_aug.batch_size)
+
             predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps)
             training_targets = combine_pseudo_labels_with_instance_labels(predictions, data_gen)
 
-            train_generator_strong_aug = data_gen.train_generator_strong_aug
             train_mil_generator = get_data_generator_with_targets(train_generator_strong_aug, training_targets)
-            steps_per_epoch = int(self.n_training_points / train_generator_strong_aug.batch_size)
             self.model.fit(
                 train_mil_generator,
                 epochs=1,
                 class_weight=class_weights,
                 initial_epoch=epoch,
-                steps_per_epoch= steps_per_epoch,
-                # callbacks=[callbacks],
+                steps_per_epoch=steps,
+                callbacks=[callbacks],
                 validation_data=data_gen.validation_generator
             )
 
@@ -73,11 +83,11 @@ class MILModel:
         self.model.build(input_shape)
         self.model.compile(optimizer='adam',
                            loss=['categorical_crossentropy'],
-                           metrics=['accuracy'])
-                                    # tf.keras.metrics.Precision(),
-                                    # tf.keras.metrics.Recall(),
-                                    # tfa.metrics.F1Score(num_classes=self.num_classes),
-                                    # tfa.metrics.CohenKappa(num_classes=self.num_classes)])
+                           metrics=['accuracy',
+                                    tf.keras.metrics.Precision(),
+                                    tf.keras.metrics.Recall(),
+                                    tfa.metrics.F1Score(num_classes=self.num_classes),
+                                    tfa.metrics.CohenKappa(num_classes=self.num_classes)])
 
     def _load_combined_model(self, artifact_path: str = "./models/", name: str = "cnn"):
         model_path = os.path.join(artifact_path, "models")

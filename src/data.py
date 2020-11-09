@@ -52,12 +52,15 @@ class DataGenerator():
         if target_mode == 'class':
             y_col = 'class'
             class_mode = 'categorical'
+            classes = [str(i) for i in range(self.num_classes)]
         elif target_mode == 'index':
             y_col = 'index'
             class_mode = 'raw'
+            classes = None
         else:
             y_col = 'index'
             class_mode = None
+            classes = None
 
         dataframe['index'] = dataframe.index
         generator = datagen.flow_from_dataframe(
@@ -68,6 +71,7 @@ class DataGenerator():
             target_size=self.data_config["image_target_size"],
             batch_size=self.batch_size,
             shuffle=shuffle,
+            classes=classes,
             class_mode=class_mode)
 
         return generator
