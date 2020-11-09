@@ -29,9 +29,10 @@ class MILModel:
         print(self.model.summary())
 
     def train(self, data_gen):
+        class_weights = self.config['data']['mil_class_weights']
         for epoch in range(self.config["model"]["epochs"]):
             train_generator_weak_aug = data_gen.train_generator_weak_aug
-            steps = int(self.n_training_points / train_generator_weak_aug.batch_size)
+            steps = np.ceil(self.n_training_points / train_generator_weak_aug.batch_size)
             predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps)
             training_targets = combine_pseudo_labels_with_instance_labels(predictions, data_gen)
 
@@ -41,7 +42,7 @@ class MILModel:
             self.model.fit(
                 train_mil_generator,
                 epochs=1,
-                # class_weight=class_weights,
+                class_weight=class_weights,
                 initial_epoch=epoch,
                 steps_per_epoch= steps_per_epoch,
                 # callbacks=[callbacks],
@@ -94,3 +95,4 @@ class MILModel:
             plt.title("Ground Truth: " + str(ground_truth) + "    Prediction: " + str(prediction))
             os.makedirs(output_dir, exist_ok=True)
             plt.savefig(os.path.join(output_dir, str(i) + ".png"))
+

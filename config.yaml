@@ -26,7 +26,7 @@ model:
 data:
   dataset_config: ./dataset_dependent/sicapv2/config.yaml
   supervision: mil # 'full', 'mil'
-  positive_instance_labels_per_bag: 0
+  positive_instance_labels_per_bag: 10
 
 logging:
   log_experiment: True
