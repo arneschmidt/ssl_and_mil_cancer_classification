@@ -4,14 +4,15 @@ model:
   batch_size: 16
   epochs: 20
   learning_rate: 0.01
+  optimizer: sgd
   class_weighted_loss: True
   load_name: None
-  save_name: fsconv
+  save_name: efficientnetb0
   feature_extractor:
-    type: fsconv # "fsconv", "simple_cnn", "mobilenetv2", "resnet50", "efficientnetb0", "efficientnetb1"
-    global_max_pooling: True
-    num_output_features: 0 # feature dimension of feature extractor output, set to 0 to skip this layer
-    output_activation: None # sigmoid, relu
+    type: efficientnetb1 # "fsconv", "simple_cnn", "mobilenetv2", "resnet50", "efficientnetb0", "efficientnetb1"
+    global_max_pooling: False
+    num_output_features: 8 # feature dimension of feature extractor output, set to 0 to skip this layer
+    output_activation: sigmoid # sigmoid, relu
   head:
     type: deterministic # deterministic, gp, bnn
     deterministic:
@@ -27,8 +28,9 @@ data:
   dataset_config: ./dataset_dependent/sicapv2/config.yaml
   supervision: mil # 'full', 'mil'
   positive_instance_labels_per_bag: 10
+  positive_pseudo_instance_labels_per_bag: 20
 
 logging:
   log_experiment: True
-  run_name: test
+  run_name: MIL_test
   tracking_url: /home/arne/projects/mlruns

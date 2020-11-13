@@ -5,14 +5,23 @@ from random import sample
 
 
 def extract_sicap_df_info(dataframe_raw, data_config, split='train'):
+    print('Preparing data split '+split)
     # Notice: class 0 = NC, class 1 = G3, class 2 = G4, class 3 = G5
     dataframe = pd.DataFrame()
     dataframe["image_path"] = 'images/' + dataframe_raw["image_name"]
-    dataframe["class"] = np.argmax([dataframe_raw["NC"], dataframe_raw["G3"], dataframe_raw["G4"], dataframe_raw["G5"]],
-                                   axis=0).astype(str)
-    if data_config['supervision'] == 'mil' and split == 'train':
+
+    if data_config['supervision'] == 'mil':
+        dataframe["class"] = np.argmax(
+            [dataframe_raw["NC"], dataframe_raw["G3"], dataframe_raw["G4"], dataframe_raw["G5"],
+             dataframe_raw["unlabeled"]],
+            axis=0).astype(str)
         wsi_df = pd.read_excel(os.path.join(data_config["dir"], "wsi_labels.xlsx"))
-        dataframe = adopt_dataframe_to_mil(dataframe, wsi_df, data_config['positive_instance_labels_per_bag'])
+        dataframe = adopt_dataframe_to_mil(dataframe, wsi_df, data_config['positive_instance_labels_per_bag'], split)
+    else:
+        dataframe["class"] = np.argmax(
+            [dataframe_raw["NC"], dataframe_raw["G3"], dataframe_raw["G4"], dataframe_raw["G5"]],
+            axis=0).astype(str)
+
     # return dataframe with some instance labels
     return dataframe
 
@@ -23,9 +32,11 @@ def adopt_dataframe_to_mil(dataframe, wsi_dataframe, num_instance_samples, split
         dataframe["instance_label"] = 4  # class_id 4: unlabeled
         dataframe["instance_label"][rows_of_visible_instance_labels] = dataframe['class']
         dataframe['class'] = dataframe['instance_label'].astype(str)
-    elif split == 'val':
-        rows_of_visible_instance_labels = get_rows_of_visible_instances(dataframe, wsi_dataframe, num_instance_samples)
-        dataframe = dataframe[rows_of_visible_instance_labels]
+    # elif split == 'val':
+    #     rows_of_visible_instance_labels = get_rows_of_visible_instances(dataframe, wsi_dataframe, num_instance_samples)
+    #     dataframe = dataframe[rows_of_visible_instance_labels]
+    else:
+        dataframe = dataframe[dataframe["class"].str.match('4') == False]
 
     return dataframe
 

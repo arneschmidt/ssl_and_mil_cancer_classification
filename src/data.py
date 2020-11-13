@@ -19,9 +19,9 @@ class DataGenerator():
 
         if data_config['supervision'] == 'mil':
             self.train_generator_strong_aug = self.data_generator_from_dataframe(train_df, image_augmentation='strong',
-                                                                                 shuffle=False, target_mode='index')
+                                                                                 shuffle=True, target_mode='index')
             self.train_generator_weak_aug = self.data_generator_from_dataframe(train_df, image_augmentation='weak',
-                                                                               shuffle=True, target_mode='None')
+                                                                               shuffle=False, target_mode='None')
             self.num_training_samples = self.train_generator_weak_aug.n
         else:
             self.train_generator = self.data_generator_from_dataframe(train_df, image_augmentation='weak')
@@ -40,10 +40,11 @@ class DataGenerator():
                 vertical_flip=True)
         elif image_augmentation == 'strong':
             datagen = ImageDataGenerator(
-                brightness_range=[0.6, 1.5],
+                brightness_range=[0.5, 2.0],
                 rotation_range=360,
                 shear_range=0.5,
                 zoom_range=0.0,
+                fill_mode='reflect',
                 horizontal_flip=True,
                 vertical_flip=True)
         else:
@@ -72,7 +73,9 @@ class DataGenerator():
             batch_size=self.batch_size,
             shuffle=shuffle,
             classes=classes,
-            class_mode=class_mode)
+            class_mode=class_mode,
+            # save_to_dir=self.data_config['artifact_dir'] + '/' + image_augmentation
+            )
 
         return generator
 

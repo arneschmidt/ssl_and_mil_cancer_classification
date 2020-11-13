@@ -44,14 +44,15 @@ class MILModel:
         steps = np.ceil(self.n_training_points / train_generator_weak_aug.batch_size)
 
         for epoch in range(self.config["model"]["epochs"]):
-
+            print('Make predictions to produce pseudo labels..')
             predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps)
-            training_targets = combine_pseudo_labels_with_instance_labels(predictions, data_gen)
+            training_targets = combine_pseudo_labels_with_instance_labels(predictions, data_gen,
+                                                                          self.config['data']['positive_pseudo_instance_labels_per_bag'])
 
             train_mil_generator = get_data_generator_with_targets(train_generator_strong_aug, training_targets)
             self.model.fit(
                 train_mil_generator,
-                epochs=1,
+                epochs=epoch+1,
                 class_weight=class_weights,
                 initial_epoch=epoch,
                 steps_per_epoch=steps,
@@ -59,10 +60,10 @@ class MILModel:
                 validation_data=data_gen.validation_generator
             )
 
-    def test(self, test_data_generator):
+    def test(self, data_gen):
         metrics = self.model.evaluate(
-            test_data_generator,
-            steps=test_data_generator.n / self.batch_size,
+            data_gen.test_generator,
+            steps=data_gen.test_generator.n / self.batch_size,
             return_dict=True
         )
         metrics['f1_mean'] = np.mean(metrics['f1_score'])
@@ -81,11 +82,16 @@ class MILModel:
         input_shape = (self.batch_size, self.config["data"]["image_target_size"][0],
                        self.config["data"]["image_target_size"][1], 3)
         self.model.build(input_shape)
-        self.model.compile(optimizer='adam',
+
+        if self.config['model']['optimizer'] == 'sgd':
+            optimizer = tf.optimizers.SGD(learning_rate=self.config["model"]["learning_rate"])
+        else:
+            optimizer = tf.optimizers.Adam(learning_rate=self.config["model"]["learning_rate"])
+        self.model.compile(optimizer=optimizer,
                            loss=['categorical_crossentropy'],
                            metrics=['accuracy',
-                                    tf.keras.metrics.Precision(),
-                                    tf.keras.metrics.Recall(),
+                                    # tf.keras.metrics.Precision(),
+                                    # tf.keras.metrics.Recall(),
                                     tfa.metrics.F1Score(num_classes=self.num_classes),
                                     tfa.metrics.CohenKappa(num_classes=self.num_classes)])
 

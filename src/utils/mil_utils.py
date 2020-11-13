@@ -1,20 +1,19 @@
 import numpy as np
 
 
-def combine_pseudo_labels_with_instance_labels(predictions, data_gen):
+def combine_pseudo_labels_with_instance_labels(predictions, data_gen, number_of_pseudo_labels_per_class):
     unlabeled_index = len(predictions[0])
     gt_labels = np.array(data_gen.train_df['class'])
-    pseudo_labels = get_pseudo_labels(predictions, data_gen, unlabeled_index)
+    pseudo_labels = get_pseudo_labels(predictions, data_gen, unlabeled_index, number_of_pseudo_labels_per_class)
     training_targets = np.where(gt_labels == unlabeled_index, pseudo_labels, gt_labels).astype(np.int) # choose pseudo lables only when gt unlabeled
     training_targets_one_hot_plus_unlabeled = get_one_hot(training_targets, unlabeled_index+1)
     training_targets_one_hot = training_targets_one_hot_plus_unlabeled[:, 0:unlabeled_index]
     training_targets_soft_and_one_hot = np.where((training_targets_one_hot_plus_unlabeled[:,unlabeled_index] == 1)[:,np.newaxis], predictions, training_targets_one_hot)
     return training_targets_soft_and_one_hot
 
-def get_pseudo_labels(predictions, data_gen, unlabeled_index):
+def get_pseudo_labels(predictions, data_gen, unlabeled_index, number_of_pseudo_labels_per_class):
     train_dataframe = data_gen.train_df
     row = 0
-    number_of_pseudo_labels_per_class = 5
     pseudo_labels = np.full(shape=len(predictions), fill_value=unlabeled_index)
     while True:
         wsi_name = train_dataframe['wsi'][row]
