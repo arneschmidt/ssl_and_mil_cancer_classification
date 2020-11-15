@@ -36,7 +36,8 @@ def main(config):
     elif config["model"]["mode"] == "predict":
         print("Predict")
         model.predict(data_gen, config["data"]["artifact_dir"])
-
+    if config["model"]["save_feature_predictions"]:
+        model.predict_features(data_gen, config["data"]["artifact_dir"])
 
 def config_update(orig_dict, new_dict):
     for key, val in new_dict.items():

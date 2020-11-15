@@ -24,12 +24,12 @@ class DataGenerator():
                                                                                shuffle=False, target_mode='None')
             self.num_training_samples = self.train_generator_weak_aug.n
         else:
-            self.train_generator = self.data_generator_from_dataframe(train_df, image_augmentation='weak')
+            self.train_generator = self.data_generator_from_dataframe(train_df, image_augmentation='strong', shuffle=True)
             self.num_training_samples = self.train_generator.n
         self.validation_generator = self.data_generator_from_dataframe(val_df)
         self.test_generator = self.data_generator_from_dataframe(test_df)
 
-    def data_generator_from_dataframe(self, dataframe: pd.DataFrame, image_augmentation='None', shuffle=True,
+    def data_generator_from_dataframe(self, dataframe: pd.DataFrame, image_augmentation='None', shuffle=False,
                                       target_mode='class'):
         if image_augmentation == 'weak':
             datagen = ImageDataGenerator(

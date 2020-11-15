@@ -2,7 +2,7 @@ data:
   dataset_name: sicapv2
   dir: /home/arne/datasets/SICAPv2/
 #  data_split_dir: /home/arne/datasets/SICAPv2/partition_mil/Validation/Val1/
-  data_split_dir: /home/arne/projects/cancer_classification/dev_branch2/cancer_classification/dataset_dependent/sicapv2/dummy_dataset/mil/
+  data_split_dir: /home/arne/projects/cancer_classification/dev_branch2/cancer_classification/dataset_dependent/sicapv2/dummy_dataset/supervised/
 #  dir: /data/SICAPv2/images/
 #  data_split_dir: /data/SICAPv2/partition/Validation/Val1
   artifact_dir: ./dataset_dependent/sicapv2

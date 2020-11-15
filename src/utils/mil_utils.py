@@ -21,8 +21,8 @@ def get_pseudo_labels(predictions, data_gen, unlabeled_index, number_of_pseudo_l
         wsi_df = train_dataframe[train_dataframe['wsi'].str.match(wsi_name)]
         end_row_wsi = row + len(wsi_df)
 
-        if len(wsi_labels) >= 1: # means: positive bag
-            for wsi_label in wsi_labels[1:]:
+        if not wsi_labels[0] == wsi_labels[1] == 0: # means: positive bag
+            for wsi_label in wsi_labels:
                 indices = np.argsort(predictions[row:end_row_wsi,wsi_label], axis=0)[0:number_of_pseudo_labels_per_class]
                 indices = indices + row
                 pseudo_labels[indices] = wsi_label
@@ -41,3 +41,7 @@ def get_data_generator_with_targets(data_generator, targets):
         indices = y.astype(np.int).tolist()
         y_target = targets[indices]
         yield x, y_target
+
+def get_data_generator_without_targets(data_generator):
+    for x, _ in data_generator:
+        yield x

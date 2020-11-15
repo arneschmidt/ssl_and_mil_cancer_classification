@@ -9,11 +9,12 @@ from tensorflow.keras.applications.efficientnet import EfficientNetB0
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Conv2D, Dropout, MaxPool2D, Flatten, GlobalAveragePooling2D, SeparableConv2D
 from tensorflow.keras.callbacks import ModelCheckpoint
-from mlflow_log import MLFlowCallback
+from mlflow_log import MLFlowCallback, format_metrics_for_mlflow
 from model_architecture import create_model
 from sklearn.utils import class_weight
-from utils.mil_utils import combine_pseudo_labels_with_instance_labels, get_data_generator_with_targets
-
+from utils.mil_utils import combine_pseudo_labels_with_instance_labels, get_data_generator_with_targets, \
+    get_data_generator_without_targets
+from utils.save_utils import save_dataframe_with_output
 
 class MILModel:
     def __init__(self, config, num_classes, n_training_points):
@@ -26,7 +27,8 @@ class MILModel:
             self._load_combined_model(config["data"]["artifact_dir"], config["model"]["load_name"])
         self._compile_model()
 
-        print(self.model.summary())
+        print(self.model.layers[0].summary())
+        print(self.model.layers[1].summary())
 
     def train(self, data_gen):
         if self.config["logging"]["log_experiment"]:
@@ -66,17 +68,26 @@ class MILModel:
             steps=data_gen.test_generator.n / self.batch_size,
             return_dict=True
         )
-        metrics['f1_mean'] = np.mean(metrics['f1_score'])
-        for class_id in range(self.num_classes):
-            key = 'f1_class_id_' + str(class_id)
-            metrics[key] = metrics['f1_score'][class_id]
-        metrics.pop('f1_score')
+        metrics = format_metrics_for_mlflow(metrics)
         return metrics
 
-    def predict(self, test_data_generator, output_dir):
-        image_batch = test_data_generator.next()
+    def predict(self, data_gen, output_dir):
+        image_batch = data_gen.test_generator.next()
         predictions = self.model.predict(image_batch[0], steps=1)
         self._save_predictions(image_batch, predictions, output_dir)
+
+    def predict_features(self, data_gen, output_dir):
+        train_steps = np.ceil(self.n_training_points / data_gen.train_generator_weak_aug.batch_size)
+        feature_extractor = self.model.layers[0]
+        train_features = feature_extractor.predict(data_gen.train_generator_weak_aug, steps=train_steps)
+        train_predictions = self.model.predict(data_gen.train_generator_weak_aug, steps=train_steps)
+        save_dataframe_with_output(data_gen.train_df, train_predictions, train_features, output_dir, 'Train_features')
+
+        val_steps = np.ceil(data_gen.validation_generator.n / data_gen.validation_generator.batch_size)
+        val_gen_images = get_data_generator_without_targets(data_gen.validation_generator)
+        val_features = feature_extractor.predict(val_gen_images, steps=val_steps)
+        val_predictions = self.model.predict(val_gen_images, steps=val_steps)
+        save_dataframe_with_output(data_gen.val_df, val_predictions, val_features, output_dir, 'Test_features')
 
     def _compile_model(self):
         input_shape = (self.batch_size, self.config["data"]["image_target_size"][0],
@@ -93,7 +104,7 @@ class MILModel:
                                     # tf.keras.metrics.Precision(),
                                     # tf.keras.metrics.Recall(),
                                     tfa.metrics.F1Score(num_classes=self.num_classes),
-                                    tfa.metrics.CohenKappa(num_classes=self.num_classes)])
+                                    tfa.metrics.CohenKappa(num_classes=self.num_classes, weightage='quadratic')])
 
     def _load_combined_model(self, artifact_path: str = "./models/", name: str = "cnn"):
         model_path = os.path.join(artifact_path, "models")

@@ -157,3 +157,5 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 /dataset_dependent/breast_hist_images/models/
+/dataset_dependent/sicapv2/strong/
+/dataset_dependent/sicapv2/weak/

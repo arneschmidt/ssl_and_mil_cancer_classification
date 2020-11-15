@@ -1,7 +1,7 @@
 import os
+import random
 import pandas as pd
 import numpy as np
-from random import sample
 
 
 def extract_sicap_df_info(dataframe_raw, data_config, split='train'):
@@ -50,8 +50,10 @@ def set_wsi_labels(dataframe, wsi_dataframe):
         ([wsi_dataframe['Gleason_primary'], wsi_dataframe['Gleason_secondary']], axis=0)
     for wsi_df_row in range(len(wsi_dataframe["slide_id"])):
         for instance_df_row in range(len(dataframe["image_path"])):
-            wsi_dataframe["wsi_labels"][wsi_df_row] = np.arange \
-                (np.max(wsi_dataframe['wsi_max_gleason_grade'][wsi_df_row] - 1, 0))
+            # wsi_dataframe["wsi_labels"][wsi_df_row] = np.arange \
+            #     (np.max(wsi_dataframe['wsi_max_gleason_grade'][wsi_df_row] - 1, 0))
+            wsi_dataframe["wsi_labels"][wsi_df_row] = np.array([np.max(wsi_dataframe['Gleason_primary'][wsi_df_row] -2,0),
+                                                                np.max(wsi_dataframe['Gleason_secondary'][wsi_df_row] -2,0)])
             if wsi_dataframe['slide_id'][wsi_df_row] in dataframe["image_path"][instance_df_row]:
                 dataframe["wsi"][instance_df_row] = wsi_dataframe['slide_id'][wsi_df_row]
                 dataframe["wsi_labels"][instance_df_row] = wsi_dataframe["wsi_labels"][wsi_df_row]
@@ -81,7 +83,8 @@ def get_rows_of_visible_instances(dataframe, wsi_dataframe, num_instance_samples
 
 
 def sample_or_complete_list(list, num_samples):
+    random.seed(42)
     if num_samples >= len(list):
         return list
     else:
-        return sample(list, num_samples)
+        return random.sample(list, num_samples)
