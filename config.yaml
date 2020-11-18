@@ -2,7 +2,7 @@
 model:
   mode: train # "train", "test", "predict", "predict_features"
   batch_size: 16
-  epochs: 50
+  epochs: 40
   learning_rate: 0.01
   optimizer: sgd
   class_weighted_loss: True
@@ -26,9 +26,13 @@ model:
 
 data:
   dataset_config: ./dataset_dependent/sicapv2/config.yaml
-  supervision: full # 'full', 'mil'
+  supervision: mil # 'full', 'mil'
   positive_instance_labels_per_bag: 10
-  positive_pseudo_instance_labels_per_bag: 20
+  positive_pseudo_instance_labels_per_bag: 10
+  strong_augment_brightness_range: [1.0, 1.0]
+  strong_augment_channel_shift: 70.0
+  weak_augment_brightness_range: [1.0, 1.0]
+  weak_augment_channel_shift: 10.0
 
 logging:
   log_experiment: True

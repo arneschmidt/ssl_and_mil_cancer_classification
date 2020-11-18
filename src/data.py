@@ -33,17 +33,17 @@ class DataGenerator():
                                       target_mode='class'):
         if image_augmentation == 'weak':
             datagen = ImageDataGenerator(
-                brightness_range=[0.9, 1.1],
-                shear_range=0.2,
-                zoom_range=0.0,
+                brightness_range=self.data_config["weak_augment_brightness_range"],
+                channel_shift_range=self.data_config["weak_augment_channel_shift"],
+                rotation_range=360,
+                fill_mode='reflect',
                 horizontal_flip=True,
                 vertical_flip=True)
         elif image_augmentation == 'strong':
             datagen = ImageDataGenerator(
-                brightness_range=[0.5, 2.0],
+                brightness_range=self.data_config["strong_augment_brightness_range"],
+                channel_shift_range=self.data_config["strong_augment_channel_shift"],
                 rotation_range=360,
-                shear_range=0.5,
-                zoom_range=0.0,
                 fill_mode='reflect',
                 horizontal_flip=True,
                 vertical_flip=True)
@@ -74,7 +74,8 @@ class DataGenerator():
             shuffle=shuffle,
             classes=classes,
             class_mode=class_mode,
-            # save_to_dir=self.data_config['artifact_dir'] + '/' + image_augmentation
+            # save_to_dir=self.data_config['artifact_dir'] + '/' + image_augmentation,
+            # save_format='jpeg'
             )
 
         return generator
