@@ -131,4 +131,3 @@ dependencies:
     - websocket-client==0.57.0
     - xlrd==1.2.0
 prefix: /home/arne/miniconda3/envs/tensorflow_2_3
-

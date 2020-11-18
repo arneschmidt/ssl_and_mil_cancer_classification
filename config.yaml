@@ -1,6 +1,6 @@
 # This is the main config. Parameters are update and possibly overwritten by dataset dependent configs.
 model:
-  mode: train # "train", "test", "predict"
+  mode: train # "train", "test", "predict", "predict_features"
   batch_size: 16
   epochs: 50
   learning_rate: 0.01
@@ -8,7 +8,6 @@ model:
   class_weighted_loss: True
   load_name: None
   save_name: efficientnetb0
-  save_feature_predictions: True
   feature_extractor:
     type: efficientnetb1 # "fsconv", "simple_cnn", "mobilenetv2", "resnet50", "efficientnetb0", "efficientnetb1"
     global_max_pooling: False

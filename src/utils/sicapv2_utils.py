@@ -52,8 +52,8 @@ def set_wsi_labels(dataframe, wsi_dataframe):
         for instance_df_row in range(len(dataframe["image_path"])):
             # wsi_dataframe["wsi_labels"][wsi_df_row] = np.arange \
             #     (np.max(wsi_dataframe['wsi_max_gleason_grade'][wsi_df_row] - 1, 0))
-            wsi_dataframe["wsi_labels"][wsi_df_row] = np.array([np.max(wsi_dataframe['Gleason_primary'][wsi_df_row] -2,0),
-                                                                np.max(wsi_dataframe['Gleason_secondary'][wsi_df_row] -2,0)])
+            wsi_dataframe["wsi_labels"][wsi_df_row] = np.array([np.max([wsi_dataframe['Gleason_primary'][wsi_df_row] -2,0]),
+                                                                np.max([wsi_dataframe['Gleason_secondary'][wsi_df_row] -2,0])])
             if wsi_dataframe['slide_id'][wsi_df_row] in dataframe["image_path"][instance_df_row]:
                 dataframe["wsi"][instance_df_row] = wsi_dataframe['slide_id'][wsi_df_row]
                 dataframe["wsi_labels"][instance_df_row] = wsi_dataframe["wsi_labels"][wsi_df_row]
