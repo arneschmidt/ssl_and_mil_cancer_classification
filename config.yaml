@@ -6,8 +6,9 @@ model:
   learning_rate: 0.01
   optimizer: sgd
   class_weighted_loss: True
+  loss_function: categorical_crossentropy # "categorical_crossentropy", "focal_loss"
   load_name: None
-  save_name: efficientnetb0
+  save_name: efficientnetb1
   feature_extractor:
     type: efficientnetb1 # "fsconv", "simple_cnn", "mobilenetv2", "resnet50", "efficientnetb0", "efficientnetb1"
     global_max_pooling: False
@@ -29,12 +30,12 @@ data:
   supervision: mil # 'full', 'mil'
   positive_instance_labels_per_bag: 10
   positive_pseudo_instance_labels_per_bag: 10
-  strong_augment_brightness_range: [1.0, 1.0]
-  strong_augment_channel_shift: 70.0
-  weak_augment_brightness_range: [1.0, 1.0]
-  weak_augment_channel_shift: 10.0
+  strong_augment_brightness_range: [0.5, 2.0]
+  strong_augment_channel_shift: 0.0
+  weak_augment_brightness_range: [0.9, 1.1]
+  weak_augment_channel_shift: 0.0
 
 logging:
   log_experiment: True
-  run_name: MIL_test
+  run_name: efficientnetb1
   tracking_url: /home/arne/projects/mlruns

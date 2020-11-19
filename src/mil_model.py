@@ -98,8 +98,15 @@ class MILModel:
             optimizer = tf.optimizers.SGD(learning_rate=self.config["model"]["learning_rate"])
         else:
             optimizer = tf.optimizers.Adam(learning_rate=self.config["model"]["learning_rate"])
+
+        if self.config['loss_function']['focal_loss']:
+            loss = tfa.losses.SigmoidFocalCrossEntropy()
+        else:
+            loss = 'categorical_crossentropy'
+
+
         self.model.compile(optimizer=optimizer,
-                           loss=['categorical_crossentropy'],
+                           loss=loss,
                            metrics=['accuracy',
                                     # tf.keras.metrics.Precision(),
                                     # tf.keras.metrics.Recall(),
