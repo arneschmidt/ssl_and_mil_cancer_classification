@@ -99,7 +99,7 @@ class MILModel:
         else:
             optimizer = tf.optimizers.Adam(learning_rate=self.config["model"]["learning_rate"])
 
-        if self.config['loss_function']['focal_loss']:
+        if self.config['model']['loss_function'] == 'focal_loss':
             loss = tfa.losses.SigmoidFocalCrossEntropy()
         else:
             loss = 'categorical_crossentropy'
