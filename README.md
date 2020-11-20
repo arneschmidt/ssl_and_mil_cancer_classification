@@ -1,7 +1,3 @@
-# CAUTION: This branch is under heavy construction. Long functions may drop from the ceiling and lead to serious injuries.
-# Cancer Classification
-This is a repo to trian and test deep learning models for cancer classification.
-
 ## Usage
 To make this code run on your machine you need to:
 * download dataset (see dataset_dependent folders READMEs)
