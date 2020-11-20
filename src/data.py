@@ -21,7 +21,8 @@ class DataGenerator():
             self.train_generator_strong_aug = self.data_generator_from_dataframe(train_df, image_augmentation='strong',
                                                                                  shuffle=True, target_mode='index')
             self.train_generator_weak_aug = self.data_generator_from_dataframe(train_df, image_augmentation='weak',
-                                                                               shuffle=False, target_mode='None')
+                                                                               shuffle=False, target_mode='None',
+                                                                               positive_bags_only=True)
             self.num_training_samples = self.train_generator_weak_aug.n
         else:
             self.train_generator = self.data_generator_from_dataframe(train_df, image_augmentation='strong', shuffle=True)
@@ -30,7 +31,7 @@ class DataGenerator():
         self.test_generator = self.data_generator_from_dataframe(test_df)
 
     def data_generator_from_dataframe(self, dataframe: pd.DataFrame, image_augmentation='None', shuffle=False,
-                                      target_mode='class'):
+                                      target_mode='class', positive_bags_only=False):
         if image_augmentation == 'weak':
             datagen = ImageDataGenerator(
                 brightness_range=self.data_config["weak_augment_brightness_range"],
@@ -64,6 +65,9 @@ class DataGenerator():
             classes = None
 
         dataframe['index'] = dataframe.index
+        if positive_bags_only:
+            dataframe = dataframe[dataframe['class'] != "0"]
+
         generator = datagen.flow_from_dataframe(
             dataframe=dataframe,
             directory=self.data_config["dir"],

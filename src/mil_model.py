@@ -43,13 +43,15 @@ class MILModel:
 
         train_generator_weak_aug = data_gen.train_generator_weak_aug
         train_generator_strong_aug = data_gen.train_generator_strong_aug
-        steps = np.ceil(self.n_training_points / train_generator_weak_aug.batch_size)
+
+        steps_all = np.ceil(self.n_training_points / self.batch_size)
+        steps_positive_bags_only = np.ceil(train_generator_weak_aug.n / self.batch_size)
+        num_pseudo_labels = self.config['data']['positive_pseudo_instance_labels_per_bag']
 
         for epoch in range(self.config["model"]["epochs"]):
             print('Make predictions to produce pseudo labels..')
-            predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps)
-            training_targets = combine_pseudo_labels_with_instance_labels(predictions, data_gen,
-                                                                          self.config['data']['positive_pseudo_instance_labels_per_bag'])
+            predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps_positive_bags_only)
+            training_targets = combine_pseudo_labels_with_instance_labels(predictions, data_gen.train_df, num_pseudo_labels)
 
             train_mil_generator = get_data_generator_with_targets(train_generator_strong_aug, training_targets)
             self.model.fit(
@@ -57,7 +59,7 @@ class MILModel:
                 epochs=epoch+1,
                 class_weight=class_weights,
                 initial_epoch=epoch,
-                steps_per_epoch=steps,
+                steps_per_epoch=steps_all,
                 callbacks=[callbacks],
                 validation_data=data_gen.validation_generator
             )
