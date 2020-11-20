@@ -4,9 +4,7 @@ data:
   data_split_dir: ./dataset_dependent/breast_hist_images/data_split/
   artifact_dir: ./dataset_dependent/breast_hist_images
   image_target_size: [90 , 90]
+  num_classes: 4
 
-model:
-  load_name: None
-  save_name: test
 
 

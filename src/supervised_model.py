@@ -4,16 +4,12 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 import tensorflow_probability as tfp
 import numpy as np
-from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
-from tensorflow.keras.applications.efficientnet import EfficientNetB0
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import Dense, Conv2D, Dropout, MaxPool2D, Flatten, GlobalAveragePooling2D, SeparableConv2D
-from tensorflow.keras.callbacks import ModelCheckpoint
 from mlflow_log import MLFlowCallback
 from model_architecture import create_model
+from sklearn.utils import class_weight
 
 
-class ClassficationModel:
+class SupervisedModel:
     def __init__(self, config, num_classes, n_training_points):
         self.n_training_points = n_training_points
         self.batch_size = config["model"]["batch_size"]
@@ -26,21 +22,37 @@ class ClassficationModel:
 
         print(self.model.summary())
 
-    def train(self, train_data_generator, val_data_generator):
+    def train(self, data_gen):
+        train_data_generator = data_gen.train_generator
+        val_data_generator = data_gen.validation_generator
         if self.config["logging"]["log_experiment"]:
             callbacks = [MLFlowCallback(self.config)]
         else:
             callbacks = []
+
+        if self.config["model"]["class_weighted_loss"]:
+            class_weights_array = class_weight.compute_class_weight(
+                class_weight='balanced',
+                classes=np.unique(train_data_generator.classes),
+                y=train_data_generator.classes)
+            class_weights = {}
+            for class_id in train_data_generator.class_indices.values():
+                class_weights[class_id] = class_weights_array[class_id]
+        else:
+            class_weights = None
+
         steps_per_epoch = int(self.n_training_points / train_data_generator.batch_size)
         self.model.fit(
             train_data_generator,
             epochs=self.config["model"]["epochs"],
+            class_weight=class_weights,
             steps_per_epoch= steps_per_epoch,
             callbacks=[callbacks],
             validation_data=val_data_generator
         )
 
-    def test(self, test_data_generator):
+    def test(self, data_gen):
+        test_data_generator = data_gen.test_generator
         metrics = self.model.evaluate(
             test_data_generator,
             steps=test_data_generator.n / self.batch_size,
@@ -53,12 +65,16 @@ class ClassficationModel:
         metrics.pop('f1_score')
         return metrics
 
-    def predict(self, test_data_generator, output_dir):
+    def predict(self, data_gen, output_dir):
+        test_data_generator = data_gen.test_generator
         image_batch = test_data_generator.next()
         predictions = self.model.predict(image_batch[0], steps=1)
         self._save_predictions(image_batch, predictions, output_dir)
 
     def _compile_model(self):
+        input_shape = (self.batch_size, self.config["data"]["image_target_size"][0],
+                       self.config["data"]["image_target_size"][1], 3)
+        self.model.build(input_shape)
         self.model.compile(optimizer='adam',
                            loss=['categorical_crossentropy'],
                            metrics=['accuracy',

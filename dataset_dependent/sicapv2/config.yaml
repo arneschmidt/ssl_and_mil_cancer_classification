@@ -1,9 +1,18 @@
 data:
   dataset_name: sicapv2
-  dir: /home/arne/datasets/SICAPv2/images/
-  data_split_dir: /home/arne/datasets/SICAPv2/partition/Validation/Val1/
+#  dir: /home/arne/datasets/SICAPv2/
+#  data_split_dir: /home/arne/datasets/SICAPv2/partition_mil/Validation/Val1/
+#  data_split_dir: /home/arne/projects/cancer_classification/dev_branch2/cancer_classification/dataset_dependent/sicapv2/dummy_dataset/supervised/
+  dir: /data/BasesDeDatos/SICAP/SICAPv2_MIL/
+  data_split_dir: /data/BasesDeDatos/SICAP/SICAPv2_MIL/partition_mil/Validation/Val1
   artifact_dir: ./dataset_dependent/sicapv2
   image_target_size: [250, 250]
+  num_classes: 4
+  mil_class_weights:
+    0: 0.5
+    1: 2.0
+    2: 2.0
+    3: 2.0
 
 
 

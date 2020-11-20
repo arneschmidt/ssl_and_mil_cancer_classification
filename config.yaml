@@ -1,13 +1,19 @@
 # This is the main config. Parameters are update and possibly overwritten by dataset dependent configs.
 model:
-  mode: test # "train", "test", "predict"
+  mode: train # "train", "test", "predict", "predict_features"
   batch_size: 16
-  epochs: 10
-  learning_rate: 0.001
+  epochs: 40
+  learning_rate: 0.01
+  optimizer: sgd
+  class_weighted_loss: True
+  loss_function: categorical_crossentropy # "categorical_crossentropy", "focal_loss"
   load_name: None
-  save_name: None
-  feature_extractor: simple_cnn # "simple_cnn", "mobilenetv2", "resnet50", "efficientnetb0", "efficientnetb1"
-  num_output_features: 0 # feature dimension of feature extractor output, set to 0 to skip this layer
+  save_name: efficientnetb1
+  feature_extractor:
+    type: efficientnetb1 # "fsconv", "simple_cnn", "mobilenetv2", "resnet50", "efficientnetb0", "efficientnetb1"
+    global_max_pooling: False
+    num_output_features: 8 # feature dimension of feature extractor output, set to 0 to skip this layer
+    output_activation: sigmoid # sigmoid, relu
   head:
     type: deterministic # deterministic, gp, bnn
     deterministic:
@@ -16,14 +22,20 @@ model:
     gp:
       inducing_points: 200
     bnn:
-      number_hidden_units: 1000
+      number_hidden_units: 100
       kl_loss_factor: 1
 
-
-
-dataset_config: ./dataset_dependent/sicapv2/config.yaml
+data:
+  dataset_config: ./dataset_dependent/sicapv2/config.yaml
+  supervision: mil # 'full', 'mil'
+  positive_instance_labels_per_bag: 10
+  positive_pseudo_instance_labels_per_bag: 10
+  strong_augment_brightness_range: [0.5, 2.0]
+  strong_augment_channel_shift: 0.0
+  weak_augment_brightness_range: [0.9, 1.1]
+  weak_augment_channel_shift: 0.0
 
 logging:
   log_experiment: True
-  run_name: test
+  run_name: efficientnetb1
   tracking_url: /home/arne/projects/mlruns
