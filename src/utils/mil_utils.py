@@ -23,9 +23,10 @@ def get_pseudo_labels(predictions, train_df, unlabeled_index, number_of_pseudo_l
 
         if not wsi_labels[0] == wsi_labels[1] == 0: # means: positive bag
             for wsi_label in wsi_labels:
-                indices = np.argsort(predictions[row:end_row_wsi,wsi_label], axis=0)[0:number_of_pseudo_labels_per_class]
-                indices = indices + row
-                pseudo_labels[indices] = wsi_label
+                sorted_indices_low_to_high = np.argsort(predictions[row:end_row_wsi,wsi_label], axis=0)
+                top_indices = sorted_indices_low_to_high[::-1][:number_of_pseudo_labels_per_class]
+                top_indices = top_indices + row
+                pseudo_labels[top_indices] = wsi_label
         if end_row_wsi == len(train_df):
             break
         else:
