@@ -9,6 +9,6 @@ def save_dataframe_with_output(dataframe, predictions, features, output_dir, sav
 
     output_dir = os.path.join(output_dir, 'feature_predictions')
     os.makedirs(output_dir, exist_ok=True)
-    save_path = output_dir + '/' + save_name + '.csv'
+    save_path = output_dir + '/' + save_name + '.xlsx'
     print('Saving dataframe with output: ' + save_path)
     dataframe.to_excel(save_path, index=False)
