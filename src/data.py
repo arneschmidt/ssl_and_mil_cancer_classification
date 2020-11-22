@@ -22,7 +22,7 @@ class DataGenerator():
                                                                                  shuffle=True, target_mode='index')
             self.train_generator_weak_aug = self.data_generator_from_dataframe(train_df, image_augmentation='weak',
                                                                                shuffle=False, target_mode='None',
-                                                                               positive_bags_only=True)
+                                                                               positive_bags_only=False)
             self.num_training_samples = self.train_generator_weak_aug.n
         else:
             self.train_generator = self.data_generator_from_dataframe(train_df, image_augmentation='strong', shuffle=True)

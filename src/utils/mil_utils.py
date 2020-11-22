@@ -4,7 +4,7 @@ import numpy as np
 def combine_pseudo_labels_with_instance_labels(predictions, train_df, number_of_pseudo_labels_per_class):
     unlabeled_index = len(predictions[0]) # index of unlabeled class
     gt_labels = np.array(train_df['class'], dtype=int)
-    predictions = pad_array(predictions, len(train_df))
+    # predictions = pad_array(predictions, len(train_df))
     pseudo_labels = get_pseudo_labels(predictions, train_df, unlabeled_index, number_of_pseudo_labels_per_class)
     training_targets = np.where(gt_labels == unlabeled_index, pseudo_labels, gt_labels).astype(np.int) # choose pseudo lables only when gt unlabeled
     training_targets_one_hot_plus_unlabeled = get_one_hot(training_targets, unlabeled_index+1)
