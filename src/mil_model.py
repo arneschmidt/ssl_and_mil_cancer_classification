@@ -44,7 +44,7 @@ class MILModel:
         train_generator_weak_aug = data_gen.train_generator_weak_aug
         train_generator_strong_aug = data_gen.train_generator_strong_aug
 
-        steps_all = np.ceil(self.n_training_points / self.batch_size)
+        steps_all = np.ceil(train_generator_strong_aug.n / self.batch_size)
         steps_positive_bags_only = np.ceil(train_generator_weak_aug.n / self.batch_size)
         num_pseudo_labels = self.config['data']['positive_pseudo_instance_labels_per_bag']
 
