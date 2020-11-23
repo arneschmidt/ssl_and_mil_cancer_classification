@@ -30,7 +30,7 @@ class SupervisedModel:
         else:
             callbacks = []
 
-        if self.config["model"]["class_weighted_loss"]:
+        if self.config["model"]["class_weighted_loss"] and self.config['model']['use_fixed_class_weights'] is False:
             class_weights_array = class_weight.compute_class_weight(
                 class_weight='balanced',
                 classes=np.unique(train_data_generator.classes),
@@ -38,6 +38,8 @@ class SupervisedModel:
             class_weights = {}
             for class_id in train_data_generator.class_indices.values():
                 class_weights[class_id] = class_weights_array[class_id]
+        elif self.config["model"]["class_weighted_loss"] and self.config['model']['use_fixed_class_weights']:
+            class_weights = self.config['data']['fixed_class_weights']
         else:
             class_weights = None
 

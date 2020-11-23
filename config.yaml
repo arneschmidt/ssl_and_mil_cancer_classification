@@ -6,6 +6,7 @@ model:
   learning_rate: 0.01
   optimizer: sgd
   class_weighted_loss: True
+  use_fixed_class_weights: False
   loss_function: categorical_crossentropy # "categorical_crossentropy", "focal_loss"
   load_name: None
   save_name: efficientnetb1
