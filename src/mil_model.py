@@ -43,16 +43,17 @@ class MILModel:
         steps_all = np.ceil(train_generator_strong_aug.n / self.batch_size)
         steps_positive_bags_only = np.ceil(train_generator_weak_aug.n / self.batch_size)
         num_pseudo_labels = self.config['data']['positive_pseudo_instance_labels_per_bag']
+        label_weights = self.config['data']['label_weights']
 
         for epoch in range(self.config["model"]["epochs"]):
             print('Make predictions to produce pseudo labels..')
             predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps_positive_bags_only)
-            training_targets = combine_pseudo_labels_with_instance_labels(predictions, data_gen.train_df, num_pseudo_labels)
+            training_targets, sample_weights = combine_pseudo_labels_with_instance_labels(predictions, data_gen.train_df, num_pseudo_labels, label_weights)
 
             if self.config["model"]["class_weighted_loss"]:
                 class_weights = self._calculate_class_weights(training_targets)
 
-            train_mil_generator = get_data_generator_with_targets(train_generator_strong_aug, training_targets)
+            train_mil_generator = get_data_generator_with_targets(train_generator_strong_aug, training_targets, sample_weights)
             self.model.fit(
                 train_mil_generator,
                 epochs=epoch+1,
@@ -90,7 +91,6 @@ class MILModel:
         val_features = feature_extractor.predict(val_gen_images, steps=val_steps)
         val_predictions = self.model.predict(val_gen_images, steps=val_steps)
         save_dataframe_with_output(data_gen.val_df, val_predictions, val_features, output_dir, 'Test_features')
-
 
     def _calculate_class_weights(self, training_targets):
         if self.config['model']['use_fixed_class_weights']:
