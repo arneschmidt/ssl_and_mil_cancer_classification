@@ -6,6 +6,7 @@ model:
   learning_rate: 0.01
   optimizer: sgd
   class_weighted_loss: True
+  use_fixed_class_weights: False
   loss_function: categorical_crossentropy # "categorical_crossentropy", "focal_loss"
   load_name: None
   save_name: efficientnetb1
@@ -34,6 +35,11 @@ data:
   strong_augment_channel_shift: 0.0
   weak_augment_brightness_range: [0.9, 1.1]
   weak_augment_channel_shift: 0.0
+  label_weights:
+    positive_gt_labels: 2.0
+    pseudo_labels: 2.0
+    soft_labels: 1.0
+    negative_gt_labels: 0.5
 
 logging:
   log_experiment: True
