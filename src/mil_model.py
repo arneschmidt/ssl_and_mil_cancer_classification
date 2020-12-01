@@ -2,19 +2,14 @@ import os
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_addons as tfa
-import tensorflow_probability as tfp
 import numpy as np
-from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
-from tensorflow.keras.applications.efficientnet import EfficientNetB0
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import Dense, Conv2D, Dropout, MaxPool2D, Flatten, GlobalAveragePooling2D, SeparableConv2D
-from tensorflow.keras.callbacks import ModelCheckpoint
 from mlflow_log import MLFlowCallback, format_metrics_for_mlflow
 from model_architecture import create_model
 from sklearn.utils import class_weight
 from utils.mil_utils import combine_pseudo_labels_with_instance_labels, get_data_generator_with_targets, \
     get_data_generator_without_targets
 from utils.save_utils import save_dataframe_with_output
+from utils.wsi_gleason_validation_utils import get_wsi_gleason_metrics
 
 class MILModel:
     def __init__(self, config, num_classes, n_training_points):
@@ -32,7 +27,8 @@ class MILModel:
 
     def train(self, data_gen):
         if self.config["logging"]["log_experiment"]:
-            callbacks = [MLFlowCallback(self.config)]
+            mlflow_callback = MLFlowCallback(self.config)
+            callbacks = [mlflow_callback]
         else:
             callbacks = []
 
@@ -63,6 +59,10 @@ class MILModel:
                 callbacks=[callbacks],
                 validation_data=data_gen.validation_generator
             )
+            if self.config["data"]["wsi_gleason_score_validation"] and epoch%5 == 0:
+                metrics_dict = get_wsi_gleason_metrics(self.model, data_gen.validation_generator, data_gen.val_df,
+                                        data_gen.wsi_df, self.batch_size)
+                mlflow_callback.log_wsi_results(metrics_dict)
 
     def test(self, data_gen):
         metrics = self.model.evaluate(

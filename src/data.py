@@ -12,10 +12,11 @@ class DataGenerator():
         self.data_config = data_config
         self.num_classes = data_config['num_classes']
         self.batch_size = batch_size
-        train_df, val_df, test_df = self.load_dataframes()
+        train_df, val_df, test_df, wsi_df = self.load_dataframes()
         self.train_df = train_df
         self.val_df = val_df
         self.test_df = test_df
+        self.wsi_df = wsi_df
 
         if data_config['supervision'] == 'mil':
             self.train_generator_strong_aug = self.data_generator_from_dataframe(train_df, image_augmentation='strong',
@@ -86,6 +87,7 @@ class DataGenerator():
 
     def load_dataframes(self):
         if self.data_config["dataset_name"] == "breast_hist_images":
+            wsi_df = None
             train_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "train.txt"))
             train_df["class"] = train_df["image_path"].str.extract("class(\d+)").astype(str)
             val_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val.txt"))
@@ -93,11 +95,12 @@ class DataGenerator():
             test_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "test.txt"))
             test_df["class"] = test_df["image_path"].str.extract("class(\d+)").astype(str)
         elif self.data_config["dataset_name"] == "sicapv2":
+            wsi_df = pd.read_excel(os.path.join(self.data_config["dir"], "wsi_labels.xlsx"))
             train_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Train.xlsx"))
-            train_df = extract_sicap_df_info(train_df_raw, self.data_config, split='train')
+            train_df = extract_sicap_df_info(train_df_raw, wsi_df, self.data_config, split='train')
             val_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Test.xlsx"))
-            val_df = extract_sicap_df_info(val_df_raw, self.data_config, split='val')
-            test_df = extract_sicap_df_info(val_df_raw, self.data_config, split='test')
+            val_df = extract_sicap_df_info(val_df_raw, wsi_df, self.data_config, split='val')
+            test_df = extract_sicap_df_info(val_df_raw, wsi_df, self.data_config, split='test')
         else:
             raise Exception("Please choose valid dataset name!")
-        return train_df, val_df, test_df
+        return train_df, val_df, test_df, wsi_df

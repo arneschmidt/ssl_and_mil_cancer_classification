@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 
-def extract_sicap_df_info(dataframe_raw, data_config, split='train'):
+def extract_sicap_df_info(dataframe_raw, wsi_df, data_config, split='train'):
     print('Preparing data split '+split)
     # Notice: class 0 = NC, class 1 = G3, class 2 = G4, class 3 = G5
     dataframe = pd.DataFrame()
@@ -15,7 +15,6 @@ def extract_sicap_df_info(dataframe_raw, data_config, split='train'):
             [dataframe_raw["NC"], dataframe_raw["G3"], dataframe_raw["G4"], dataframe_raw["G5"],
              dataframe_raw["unlabeled"]],
             axis=0).astype(str)
-        wsi_df = pd.read_excel(os.path.join(data_config["dir"], "wsi_labels.xlsx"))
         dataframe = adopt_dataframe_to_mil(dataframe, wsi_df, data_config['positive_instance_labels_per_bag'], split)
     else:
         dataframe["class"] = np.argmax(
@@ -36,7 +35,7 @@ def adopt_dataframe_to_mil(dataframe, wsi_dataframe, num_instance_samples, split
     #     rows_of_visible_instance_labels = get_rows_of_visible_instances(dataframe, wsi_dataframe, num_instance_samples)
     #     dataframe = dataframe[rows_of_visible_instance_labels]
     else:
-        dataframe = dataframe[dataframe["class"].str.match('4') == False]
+        dataframe = dataframe[dataframe["class"].str.match('4') == False].reset_index(inplace=False)
 
     return dataframe
 

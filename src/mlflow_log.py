@@ -3,6 +3,7 @@ import mlflow
 import tensorflow
 import os
 import numpy as np
+from utils.wsi_gleason_validation_utils import get_wsi_gleason_metrics
 
 class MLFlowLogger:
     def __init__(self, config: Dict):
@@ -28,6 +29,7 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
         super().__init__()
         self.finished_epochs = 0
         self.best_result = 0.0
+        self.new_best_result = False
         self.config = config
 
     def on_batch_end(self, batch: int, logs=None):
@@ -46,14 +48,19 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
 
         # Check if new best model
         if metrics_dict["val_f1_mean"] > self.best_result:
+            self.new_best_result = True
             print("\n New best model! Saving model..")
             self.best_result = metrics_dict["val_f1_mean"]
             if self.config["model"]["save_name"] != "None":
                 self._save_model()
             mlflow.log_metric("best_val_f1_mean", metrics_dict["val_f1_mean"])
             mlflow.log_metric("saved_model_epoch", self.finished_epochs)
+        else:
+            self.new_best_result = False
 
-    # TODO: fix save bug for gp and bnn head
+    def log_wsi_results(self, metrics_dict):
+        mlflow.log_metrics(metrics_dict, step=int(self.finished_epochs * self.params['steps']))
+
     def _save_model(self):
         save_dir = os.path.join(self.config["data"]["artifact_dir"], "models")
         name = self.config["model"]["save_name"]
