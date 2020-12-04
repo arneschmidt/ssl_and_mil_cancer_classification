@@ -12,3 +12,10 @@ def save_dataframe_with_output(dataframe, predictions, features, output_dir, sav
     save_path = output_dir + '/' + save_name + '.xlsx'
     print('Saving dataframe with output: ' + save_path)
     dataframe.to_excel(save_path, index=False)
+
+def save_confusion_matrices(confusion_matrices, output_dir):
+    output_dir = os.path.join(output_dir, 'confusion_matrices')
+    os.makedirs(output_dir, exist_ok=True)
+    for name, matrix in confusion_matrices.items():
+        save_path = output_dir + '/' + name + '.csv'
+        np.savetxt(save_path, matrix, '%10i',  delimiter=',')

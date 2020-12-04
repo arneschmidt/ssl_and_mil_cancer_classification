@@ -18,11 +18,14 @@ def get_wsi_gleason_metrics(model, data_gen, patch_dataframe, wsi_dataframe, bat
     metrics_dict['wsi_isup_cohens_quadratic_kappa'] = cohen_kappa_score(wsi_predict_dataframe['isup_grade'],
                                                                    wsi_gt_dataframe['isup_grade'],
                                                                    weights='quadratic')
-    # metrics_dict['wsi_gs_confusion_matrix'] = confusion_matrix(wsi_predict_dataframe['gleason_score'],
-    #                                                       wsi_gt_dataframe['gleason_score'])
-    # metrics_dict['wsi_isup_confusion_matrix'] = confusion_matrix(wsi_predict_dataframe['isup_grade'],
-    #                                                         wsi_gt_dataframe['isup_grade'])
-    return metrics_dict
+    confusion_matrices = {}
+    confusion_matrices['wsi_gs_confusion_matrix'] = confusion_matrix(wsi_predict_dataframe['gleason_score'],
+                                                                     wsi_gt_dataframe['gleason_score'],
+                                                                     labels=[0, 6, 7, 8, 9, 10])
+    confusion_matrices['wsi_isup_confusion_matrix'] = confusion_matrix(wsi_predict_dataframe['isup_grade'],
+                                                                       wsi_gt_dataframe['isup_grade'],
+                                                                       labels=[0, 1, 2, 3, 4, 5])
+    return metrics_dict, confusion_matrices
 
 
 def get_predictions_per_wsi(patch_dataframe, predictions):
@@ -55,8 +58,9 @@ def get_predictions_per_wsi(patch_dataframe, predictions):
             secondary = 5
         # two gleason grades
         else:
-            primary = np.argsort(num_predictions_per_class)[3] + 2
-            secondary = np.argsort(num_predictions_per_class)[2] + 2
+            # Make sure we don't include class 0 here. Argsort returns value 0,1 or 2. Add 3 to get gleason grade.
+            primary = np.argsort(num_predictions_per_class[1:4])[2] + 3
+            secondary = np.argsort(num_predictions_per_class[1:4])[1] + 3
 
         wsi_names.append(wsi_name)
         wsi_primary.append(primary)

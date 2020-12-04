@@ -8,7 +8,7 @@ from model_architecture import create_model
 from sklearn.utils import class_weight
 from utils.mil_utils import combine_pseudo_labels_with_instance_labels, get_data_generator_with_targets, \
     get_data_generator_without_targets
-from utils.save_utils import save_dataframe_with_output
+from utils.save_utils import save_dataframe_with_output, save_confusion_matrices
 from utils.wsi_gleason_validation_utils import get_wsi_gleason_metrics
 
 class MILModel:
@@ -18,7 +18,7 @@ class MILModel:
         self.num_classes = num_classes
         self.config = config
         self.model = create_model(config, self.num_classes, n_training_points)
-        if config["model"]["load_name"] != "None":
+        if config["model"]["load_model"] != "None":
             self._load_combined_model(config["data"]["artifact_dir"], config["model"]["load_name"])
         self._compile_model()
 
@@ -60,8 +60,8 @@ class MILModel:
                 validation_data=data_gen.validation_generator
             )
             if self.config["data"]["wsi_gleason_score_validation"] and epoch%5 == 0:
-                metrics_dict = get_wsi_gleason_metrics(self.model, data_gen.validation_generator, data_gen.val_df,
-                                        data_gen.wsi_df, self.batch_size)
+                metrics_dict, _ = get_wsi_gleason_metrics(self.model, data_gen.validation_generator, data_gen.val_df,
+                                                          data_gen.wsi_df, self.batch_size)
                 mlflow_callback.log_wsi_results(metrics_dict)
 
     def test(self, data_gen):
@@ -71,6 +71,11 @@ class MILModel:
             return_dict=True
         )
         metrics = format_metrics_for_mlflow(metrics)
+        if self.config["data"]["wsi_gleason_score_validation"]:
+            wsi_metrics, confusion_matrices = get_wsi_gleason_metrics(self.model, data_gen.validation_generator, data_gen.val_df,
+                                                      data_gen.wsi_df, self.batch_size)
+            metrics.update(wsi_metrics)
+            save_confusion_matrices(confusion_matrices, self.config['data']['artifact_dir'])
         return metrics
 
     def predict(self, data_gen, output_dir):
