@@ -22,7 +22,7 @@ def create_feature_extactor(config):
     feature_extractor_type = config["model"]["feature_extractor"]["type"]
 
     weights = "imagenet"
-    feature_extractor = Sequential()
+    feature_extractor = Sequential(name='feature_extractor')
     if feature_extractor_type == "mobilenetv2":
         feature_extractor.add(MobileNetV2(include_top=False, input_shape=input_shape, weights=None, pooling='avg'))
     elif feature_extractor_type == "efficientnetb0":
@@ -74,7 +74,7 @@ def create_head(config, num_classes, num_training_points):
     if head_type == "deterministic":
         hidden_units = config["model"]["head"]["deterministic"]["number_hidden_units"]
         dropout_rate = config["model"]["head"]["deterministic"]["dropout"]
-        head = Sequential()
+        head = Sequential(name='head')
         head.add(Dropout(rate=dropout_rate))
         if hidden_units > 0 :
             head.add(Dense(hidden_units, activation="relu"))
@@ -106,7 +106,7 @@ def create_head(config, num_classes, num_training_points):
                                                kernel_posterior_tensor_fn=tensor_fn,
                                                bias_posterior_tensor_fn=tensor_fn
                                                ),
-        ])
+        ], name='head')
     elif head_type == "gp":
         num_inducing_points = config["model"]["head"]["gp"]["inducing_points"]
         features = config["model"]["feature_extractor"]["num_output_features"]
@@ -132,7 +132,7 @@ def create_head(config, num_classes, num_training_points):
                 #     tf.constant_initializer(np.array(0.54).astype(np.float32))),
             ),
             tf.keras.layers.Softmax()
-        ])
+        ], name='head')
         # scaling KL divergence to batch size and dataset size
         kl_weight = np.array(config["model"]["batch_size"], np.float32) / num_training_points
         head.add_loss(tf.reduce_mean(kl_weight * head.layers[0].submodules[5].surrogate_posterior_kl_divergence_prior()))

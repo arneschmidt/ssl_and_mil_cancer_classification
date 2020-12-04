@@ -39,6 +39,7 @@ def main(config):
     elif config["model"]["mode"] == "predict_features":
         model.predict_features(data_gen, config["data"]["artifact_dir"])
 
+
 def config_update(orig_dict, new_dict):
     for key, val in new_dict.items():
         if isinstance(val, collections.Mapping):
@@ -61,4 +62,5 @@ if __name__ == "__main__":
         config_data_dependent = yaml.full_load(file)
 
     config = config_update(config, config_data_dependent)
+    config['config_path'] = args.config
     main(config)
