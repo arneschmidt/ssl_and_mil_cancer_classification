@@ -16,8 +16,8 @@ class SupervisedModel:
         self.num_classes = num_classes
         self.config = config
         self.model = create_model(config, self.num_classes, n_training_points)
-        if config["model"]["load_name"] != "None":
-            self._load_combined_model(config["data"]["artifact_dir"], config["model"]["load_name"])
+        if config["model"]["load_model"]:
+            self._load_combined_model(config["output_dir"])
         self._compile_model()
 
         print(self.model.summary())
@@ -67,11 +67,11 @@ class SupervisedModel:
         metrics.pop('f1_score')
         return metrics
 
-    def predict(self, data_gen, output_dir):
+    def predict(self, data_gen):
         test_data_generator = data_gen.test_generator
         image_batch = test_data_generator.next()
         predictions = self.model.predict(image_batch[0], steps=1)
-        self._save_predictions(image_batch, predictions, output_dir)
+        self._save_predictions(image_batch, predictions, self.config['output_dir'])
 
     def _compile_model(self):
         input_shape = (self.batch_size, self.config["data"]["image_target_size"][0],
@@ -85,10 +85,10 @@ class SupervisedModel:
                                     tfa.metrics.F1Score(num_classes=self.num_classes),
                                     tfa.metrics.CohenKappa(num_classes=self.num_classes)])
 
-    def _load_combined_model(self, artifact_path: str = "./models/", name: str = "cnn"):
+    def _load_combined_model(self, artifact_path: str = "./models/"):
         model_path = os.path.join(artifact_path, "models")
-        self.model.layers[0].load_weights(os.path.join(model_path, name + "_feature_extractor.h5"))
-        self.model.layers[1].load_weights(os.path.join(model_path, name + "_head.h5"))
+        self.model.layers[0].load_weights(os.path.join(model_path, "feature_extractor.h5"))
+        self.model.layers[1].load_weights(os.path.join(model_path, "head.h5"))
         self.model.summary()
 
     def _save_predictions(self, image_batch, predictions, output_dir):

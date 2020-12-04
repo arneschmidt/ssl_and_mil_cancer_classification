@@ -6,10 +6,9 @@ model:
   learning_rate: 0.01
   optimizer: sgd
   class_weighted_loss: True
-  use_fixed_class_weights: False
   loss_function: categorical_crossentropy # "categorical_crossentropy", "focal_loss"
-  load_name: None
-  save_name: efficientnetb1
+  load_model: False
+  save_model: True
   feature_extractor:
     type: efficientnetb1 # "fsconv", "simple_cnn", "mobilenetv2", "resnet50", "efficientnetb0", "efficientnetb1"
     global_max_pooling: False
@@ -43,5 +42,6 @@ data:
 
 logging:
   log_experiment: True
+  log_artifacts: True
   run_name: efficientnetb1
   tracking_url: /home/arne/projects/mlruns

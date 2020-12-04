@@ -35,9 +35,12 @@ def main(config):
             logger.test_logging(metrics)
     elif config["model"]["mode"] == "predict":
         print("Predict")
-        model.predict(data_gen, config["data"]["artifact_dir"])
+        model.predict(data_gen)
     elif config["model"]["mode"] == "predict_features":
-        model.predict_features(data_gen, config["data"]["artifact_dir"])
+        model.predict_features(data_gen)
+
+    if config['logging']['log_artifacts']:
+        logger.log_artifacts()
 
 
 def config_update(orig_dict, new_dict):
@@ -52,6 +55,7 @@ def config_update(orig_dict, new_dict):
     return orig_dict
 
 if __name__ == "__main__":
+    print('Load configuration')
     parser = argparse.ArgumentParser(description="Cancer Classification")
     parser.add_argument("--config", "-m", type=str, default="./config.yaml",
                         help="Config path (yaml file expected).")
@@ -61,6 +65,11 @@ if __name__ == "__main__":
     with open(config["data"]["dataset_config"]) as file:
         config_data_dependent = yaml.full_load(file)
 
+    print('Create output folder')
     config = config_update(config, config_data_dependent)
     config['config_path'] = args.config
+    config['output_dir'] = os.path.join(config['data']['artifacts_dir'], config['logging']['run_name'])
+    os.makedirs(config['output_dir'], exist_ok=True)
+    print('Output will be written to: ', config['output_dir'])
+
     main(config)

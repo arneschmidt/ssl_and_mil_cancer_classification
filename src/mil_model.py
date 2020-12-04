@@ -18,8 +18,8 @@ class MILModel:
         self.num_classes = num_classes
         self.config = config
         self.model = create_model(config, self.num_classes, n_training_points)
-        if config["model"]["load_model"] != "None":
-            self._load_combined_model(config["data"]["artifact_dir"], config["model"]["load_name"])
+        if config["model"]["load_model"]:
+            self._load_combined_model(config["output_dir"])
         self._compile_model()
 
         print(self.model.layers[0].summary())
@@ -78,12 +78,13 @@ class MILModel:
             save_confusion_matrices(confusion_matrices, self.config['data']['artifact_dir'])
         return metrics
 
-    def predict(self, data_gen, output_dir):
+    def predict(self, data_gen):
         image_batch = data_gen.test_generator.next()
         predictions = self.model.predict(image_batch[0], steps=1)
-        self._save_predictions(image_batch, predictions, output_dir)
+        self._save_predictions(image_batch, predictions, self.config['output_dir'])
 
-    def predict_features(self, data_gen, output_dir):
+    def predict_features(self, data_gen):
+        output_dir = self.config['output_dir']
         train_gen = data_gen.train_generator_strong_aug
         train_steps = np.ceil(train_gen.n / train_gen.batch_size)
         feature_extractor = self.model.layers[0]
@@ -98,18 +99,15 @@ class MILModel:
         save_dataframe_with_output(data_gen.val_df, val_predictions, val_features, output_dir, 'Test_features')
 
     def _calculate_class_weights(self, training_targets):
-        if self.config['model']['use_fixed_class_weights']:
-            class_weights = self.config['data']['fixed_class_weights']
-        else:
-            class_predictions = np.argmax(training_targets, axis=1)
-            classes = np.arange(0,self.num_classes)
-            class_weights_array = class_weight.compute_class_weight(
-                class_weight='balanced',
-                classes=classes,
-                y=class_predictions)
-            class_weights = {}
-            for class_id in classes:
-                class_weights[class_id] = class_weights_array[class_id]
+        class_predictions = np.argmax(training_targets, axis=1)
+        classes = np.arange(0,self.num_classes)
+        class_weights_array = class_weight.compute_class_weight(
+            class_weight='balanced',
+            classes=classes,
+            y=class_predictions)
+        class_weights = {}
+        for class_id in classes:
+            class_weights[class_id] = class_weights_array[class_id]
         return class_weights
 
     def _compile_model(self):
@@ -136,10 +134,10 @@ class MILModel:
                                     tfa.metrics.F1Score(num_classes=self.num_classes),
                                     tfa.metrics.CohenKappa(num_classes=self.num_classes, weightage='quadratic')])
 
-    def _load_combined_model(self, artifact_path: str = "./models/", name: str = "cnn"):
+    def _load_combined_model(self, artifact_path: str = "./models/"):
         model_path = os.path.join(artifact_path, "models")
-        self.model.layers[0].load_weights(os.path.join(model_path, name + "_feature_extractor.h5"))
-        self.model.layers[1].load_weights(os.path.join(model_path, name + "_head.h5"))
+        self.model.layers[0].load_weights(os.path.join(model_path, "feature_extractor.h5"))
+        self.model.layers[1].load_weights(os.path.join(model_path, "head.h5"))
         self.model.summary()
 
     def _save_predictions(self, image_batch, predictions, output_dir):
