@@ -23,6 +23,9 @@ class MLFlowLogger:
     def test_logging(self, metrics: Dict):
         mlflow.log_metrics(metrics)
 
+    def log_artifacts(self):
+        mlflow.log_artifacts(self.config['output_dir'])
+
 
 class MLFlowCallback(tensorflow.keras.callbacks.Callback):
     def __init__(self, config):
@@ -51,7 +54,7 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
             self.new_best_result = True
             print("\n New best model! Saving model..")
             self.best_result = metrics_dict["val_f1_mean"]
-            if self.config["model"]["save_name"] != "None":
+            if self.config["model"]["save_model"]:
                 self._save_model()
             mlflow.log_metric("best_val_f1_mean", metrics_dict["val_f1_mean"])
             mlflow.log_metric("saved_model_epoch", self.finished_epochs)
@@ -62,11 +65,10 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
         mlflow.log_metrics(metrics_dict, step=int(self.finished_epochs * self.params['steps']))
 
     def _save_model(self):
-        save_dir = os.path.join(self.config["data"]["artifact_dir"], "models")
-        name = self.config["model"]["save_name"]
+        save_dir = os.path.join(self.config["output_dir"], "models")
         os.makedirs(save_dir, exist_ok=True)
-        fe_path = os.path.join(save_dir, name + "_feature_extractor.h5")
-        head_path = os.path.join(save_dir, name + "_head.h5")
+        fe_path = os.path.join(save_dir, "feature_extractor.h5")
+        head_path = os.path.join(save_dir, "head.h5")
         self.model.layers[0].save_weights(fe_path)
         self.model.layers[1].save_weights(head_path)
 

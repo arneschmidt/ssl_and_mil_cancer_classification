@@ -35,9 +35,12 @@ def main(config):
             logger.test_logging(metrics)
     elif config["model"]["mode"] == "predict":
         print("Predict")
-        model.predict(data_gen, config["data"]["artifact_dir"])
+        model.predict(data_gen)
     elif config["model"]["mode"] == "predict_features":
-        model.predict_features(data_gen, config["data"]["artifact_dir"])
+        model.predict_features(data_gen)
+
+    if config['logging']['log_artifacts']:
+        logger.log_artifacts()
 
 
 def config_update(orig_dict, new_dict):
@@ -51,16 +54,34 @@ def config_update(orig_dict, new_dict):
             orig_dict[key] = new_dict[key]
     return orig_dict
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Cancer Classification")
-    parser.add_argument("--config", "-m", type=str, default="./config.yaml",
-                        help="Config path (yaml file expected).")
-    args = parser.parse_args()
-    with open(args.config) as file:
+def load_configs(args):
+    with open(args.default_config) as file:
         config = yaml.full_load(file)
     with open(config["data"]["dataset_config"]) as file:
         config_data_dependent = yaml.full_load(file)
 
     config = config_update(config, config_data_dependent)
-    config['config_path'] = args.config
+
+    if args.experiment_config != 'None':
+        with open(args.experiment_config) as file:
+            exp_config = yaml.full_load(file)
+        config = config_update(config, exp_config)
+
+    return config
+
+if __name__ == "__main__":
+    print('Load configuration')
+    parser = argparse.ArgumentParser(description="Cancer Classification")
+    parser.add_argument("--default_config", "-dc", type=str, default="./config.yaml",
+                        help="Config path (yaml file expected) to default config.")
+    parser.add_argument("--experiment_config", "-ec", type=str, default="None",
+                        help="Config path to experiment config. Parameters will override defaults. Optional.")
+    args = parser.parse_args()
+    config = load_configs(args)
+
+    print('Create output folder')
+    config['output_dir'] = os.path.join(config['data']['artifact_dir'], config['logging']['run_name'])
+    os.makedirs(config['output_dir'], exist_ok=True)
+    print('Output will be written to: ', config['output_dir'])
+
     main(config)
