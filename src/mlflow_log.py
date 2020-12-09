@@ -65,7 +65,7 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
         mlflow.log_metrics(metrics_dict, step=int(self.finished_epochs * self.params['steps']))
 
     def _save_model(self):
-        save_dir = os.path.join(self.config["data"]["artifact_dir"], "models")
+        save_dir = os.path.join(self.config["output_dir"], "models")
         os.makedirs(save_dir, exist_ok=True)
         fe_path = os.path.join(save_dir, "feature_extractor.h5")
         head_path = os.path.join(save_dir, "head.h5")

@@ -28,20 +28,20 @@ model:
 data:
   dataset_config: ./dataset_dependent/sicapv2/config.yaml
   supervision: mil # 'full', 'mil'
-  positive_instance_labels_per_bag: 10
-  positive_pseudo_instance_labels_per_bag: 10
-  strong_augment_brightness_range: [0.5, 2.0]
+  positive_instance_labels_per_bag: 5
+  positive_pseudo_instance_labels_per_bag: 5
+  strong_augment_brightness_range: [0.5, 1.5]
   strong_augment_channel_shift: 0.0
   weak_augment_brightness_range: [0.9, 1.1]
   weak_augment_channel_shift: 0.0
   label_weights:
-    positive_gt_labels: 2.0
-    pseudo_labels: 2.0
+    positive_gt_labels: 3.0
+    pseudo_labels: 1.0
     soft_labels: 1.0
-    negative_gt_labels: 0.5
+    negative_gt_labels: 1.0
 
 logging:
   log_experiment: True
-  log_artifacts: True
+  log_artifacts: False
   run_name: efficientnetb1
   tracking_url: /home/arne/projects/mlruns
