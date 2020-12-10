@@ -1,35 +1,37 @@
 import os
 import pandas as pd
-import numpy as np
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.utils import to_categorical
-from random import sample
 from utils.sicapv2_utils import extract_sicap_df_info
 
 # TODO: add multiple instance learning setting
 class DataGenerator():
-    def __init__(self, data_config, batch_size):
+    def __init__(self, data_config, batch_size, mode):
         self.data_config = data_config
         self.num_classes = data_config['num_classes']
         self.batch_size = batch_size
-        train_df, val_df, test_df, wsi_df = self.load_dataframes()
-        self.train_df = train_df
-        self.val_df = val_df
-        self.test_df = test_df
-        self.wsi_df = wsi_df
-
-        if data_config['supervision'] == 'mil':
-            self.train_generator_strong_aug = self.data_generator_from_dataframe(train_df, image_augmentation='strong',
-                                                                                 shuffle=True, target_mode='index')
-            self.train_generator_weak_aug = self.data_generator_from_dataframe(train_df, image_augmentation='weak',
-                                                                               shuffle=False, target_mode='None',
-                                                                               positive_bags_only=False)
-            self.num_training_samples = self.train_generator_weak_aug.n
+        self.mode = mode
+        self.train_df = None
+        self.val_df = None
+        self.test_df = None
+        self.wsi_df = None
+        if mode == 'train' or mode == 'predict_features' or mode == 'predict':
+            self.load_dataframes(split='train')
+            if data_config['supervision'] == 'mil':
+                self.train_generator_strong_aug = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong',
+                                                                                     shuffle=True, target_mode='index')
+                self.train_generator_weak_aug = self.data_generator_from_dataframe(self.train_df, image_augmentation='weak',
+                                                                                   shuffle=False, target_mode='None',
+                                                                                   positive_bags_only=False)
+                self.num_training_samples = self.train_generator_weak_aug.n
+            else:
+                self.train_generator = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong', shuffle=True)
+                self.num_training_samples = self.train_generator.n
+            self.validation_generator = self.data_generator_from_dataframe(self.val_df)
+        elif mode =='test':
+            self.load_dataframes(split='test')
+            self.test_generator = self.data_generator_from_dataframe(self.test_df)
         else:
-            self.train_generator = self.data_generator_from_dataframe(train_df, image_augmentation='strong', shuffle=True)
-            self.num_training_samples = self.train_generator.n
-        self.validation_generator = self.data_generator_from_dataframe(val_df)
-        self.test_generator = self.data_generator_from_dataframe(test_df)
+            raise Exception('Choose valid model mode')
 
     def data_generator_from_dataframe(self, dataframe: pd.DataFrame, image_augmentation='None', shuffle=False,
                                       target_mode='class', positive_bags_only=False):
@@ -85,22 +87,29 @@ class DataGenerator():
 
         return generator
 
-    def load_dataframes(self):
+    def load_dataframes(self, split):
+
         if self.data_config["dataset_name"] == "breast_hist_images":
-            wsi_df = None
-            train_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "train.txt"))
-            train_df["class"] = train_df["image_path"].str.extract("class(\d+)").astype(str)
-            val_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val.txt"))
-            val_df["class"] = val_df["image_path"].str.extract("class(\d+)").astype(str)
-            test_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "test.txt"))
-            test_df["class"] = test_df["image_path"].str.extract("class(\d+)").astype(str)
+            if split == 'train':
+                train_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "train.txt"))
+                train_df["class"] = train_df["image_path"].str.extract("class(\d+)").astype(str)
+                self.train_df = train_df
+                val_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val.txt"))
+                val_df["class"] = val_df["image_path"].str.extract("class(\d+)").astype(str)
+                self.val_df = val_df
+            elif split == 'test':
+                test_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "test.txt"))
+                test_df["class"] = test_df["image_path"].str.extract("class(\d+)").astype(str)
+                self.test_df = test_df
         elif self.data_config["dataset_name"] == "sicapv2":
-            wsi_df = pd.read_excel(os.path.join(self.data_config["dir"], "wsi_labels.xlsx"))
-            train_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Train.xlsx"))
-            train_df = extract_sicap_df_info(train_df_raw, wsi_df, self.data_config, split='train')
-            val_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Test.xlsx"))
-            val_df = extract_sicap_df_info(val_df_raw, wsi_df, self.data_config, split='val')
-            test_df = extract_sicap_df_info(val_df_raw, wsi_df, self.data_config, split='test')
+            self.wsi_df = pd.read_excel(os.path.join(self.data_config["dir"], "wsi_labels.xlsx"))
+            if split == 'train':
+                train_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Train.xlsx"))
+                self.train_df = extract_sicap_df_info(train_df_raw, self.wsi_df, self.data_config, split='train')
+                val_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Test.xlsx"))
+                self.val_df = extract_sicap_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
+            elif split == 'test':
+                test_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Test.xlsx"))
+                self.test_df = extract_sicap_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
         else:
             raise Exception("Please choose valid dataset name!")
-        return train_df, val_df, test_df, wsi_df

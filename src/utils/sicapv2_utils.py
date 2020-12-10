@@ -27,10 +27,11 @@ def extract_sicap_df_info(dataframe_raw, wsi_df, data_config, split='train'):
 def adopt_dataframe_to_mil(dataframe, wsi_dataframe, num_instance_samples, split='train'):
     dataframe, wsi_dataframe = set_wsi_labels(dataframe, wsi_dataframe)
     if split == 'train':
-        rows_of_visible_instance_labels = get_rows_of_visible_instances(dataframe, wsi_dataframe, num_instance_samples)
-        dataframe["instance_label"] = 4  # class_id 4: unlabeled
-        dataframe["instance_label"][rows_of_visible_instance_labels] = dataframe['class']
-        dataframe['class'] = dataframe['instance_label'].astype(str)
+        if num_instance_samples != 'all': # in this case we want to use all labels, without masking
+            rows_of_visible_instance_labels = get_rows_of_visible_instances(dataframe, wsi_dataframe, num_instance_samples)
+            dataframe["instance_label"] = 4  # class_id 4: unlabeled
+            dataframe["instance_label"][rows_of_visible_instance_labels] = dataframe['class']
+            dataframe['class'] = dataframe['instance_label'].astype(str)
     # elif split == 'val':
     #     rows_of_visible_instance_labels = get_rows_of_visible_instances(dataframe, wsi_dataframe, num_instance_samples)
     #     dataframe = dataframe[rows_of_visible_instance_labels]

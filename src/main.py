@@ -17,7 +17,7 @@ def main(config):
         logger.config_logging()
 
     print("Create data generators..")
-    data_gen = DataGenerator(config["data"], config["model"]["batch_size"])
+    data_gen = DataGenerator(config["data"], config["model"]["batch_size"], config['model']['mode'])
 
     print("Load classification model")
     if config['data']['supervision'] == 'full':

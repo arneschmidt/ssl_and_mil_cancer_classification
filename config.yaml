@@ -28,8 +28,8 @@ model:
 data:
   dataset_config: ./dataset_dependent/sicapv2/config.yaml
   supervision: mil # 'full', 'mil'
-  positive_instance_labels_per_bag: 5
-  positive_pseudo_instance_labels_per_bag: 5
+  positive_instance_labels_per_bag: all
+  positive_pseudo_instance_labels_per_bag: 0
   strong_augment_brightness_range: [0.5, 1.5]
   strong_augment_channel_shift: 0.0
   weak_augment_brightness_range: [0.9, 1.1]
