@@ -18,8 +18,8 @@ class MILModel:
         self.num_classes = num_classes
         self.config = config
         self.model = create_model(config, self.num_classes, n_training_points)
-        if config["model"]["load_model"]:
-            self._load_combined_model(config["output_dir"])
+        if config["model"]["load_model"] != 'None':
+            self._load_combined_model(config["model"]["load_model"])
         self._compile_model()
 
         print(self.model.layers[0].summary())
