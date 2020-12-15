@@ -43,7 +43,7 @@ class MILModel:
 
         for epoch in range(self.config["model"]["epochs"]):
             print('Make predictions to produce pseudo labels..')
-            predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps_positive_bags_only)
+            predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps_positive_bags_only, verbose=1)
             training_targets, sample_weights = combine_pseudo_labels_with_instance_labels(predictions, data_gen.train_df, num_pseudo_labels, label_weights)
 
             if self.config["model"]["class_weighted_loss"]:
