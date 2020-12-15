@@ -9,6 +9,7 @@ def extract_sicap_df_info(dataframe_raw, wsi_df, data_config, split='train'):
     # Notice: class 0 = NC, class 1 = G3, class 2 = G4, class 3 = G5
     dataframe = pd.DataFrame()
     dataframe["image_path"] = 'images/' + dataframe_raw["image_name"]
+    dataframe["wsi"] = dataframe_raw["image_name"].str.split('_').str[0]
 
     if data_config['supervision'] == 'mil':
         dataframe["class"] = np.argmax(
@@ -25,7 +26,7 @@ def extract_sicap_df_info(dataframe_raw, wsi_df, data_config, split='train'):
     return dataframe
 
 def adopt_dataframe_to_mil(dataframe, wsi_dataframe, num_instance_samples, split='train'):
-    dataframe, wsi_dataframe = set_wsi_labels(dataframe, wsi_dataframe)
+    dataframe = set_wsi_labels(dataframe, wsi_dataframe)
     if split == 'train':
         if num_instance_samples != 'all': # in this case we want to use all labels, without masking
             rows_of_visible_instance_labels = get_rows_of_visible_instances(dataframe, wsi_dataframe, num_instance_samples)
@@ -41,23 +42,37 @@ def adopt_dataframe_to_mil(dataframe, wsi_dataframe, num_instance_samples, split
     return dataframe
 
 def set_wsi_labels(dataframe, wsi_dataframe):
-    dataframe["wsi"] = np.NaN
-    dataframe["wsi_labels"] = np.NaN
-    dataframe["wsi_labels"] = dataframe["wsi_labels"].astype(object)
-    wsi_dataframe["wsi_labels"] = np.NaN
-    wsi_dataframe["wsi_labels"] = wsi_dataframe["wsi_labels"].astype(object)
-    wsi_dataframe['wsi_max_gleason_grade'] = np.max \
-        ([wsi_dataframe['Gleason_primary'], wsi_dataframe['Gleason_secondary']], axis=0)
-    for wsi_df_row in range(len(wsi_dataframe["slide_id"])):
-        for instance_df_row in range(len(dataframe["image_path"])):
-            # wsi_dataframe["wsi_labels"][wsi_df_row] = np.arange \
-            #     (np.max(wsi_dataframe['wsi_max_gleason_grade'][wsi_df_row] - 1, 0))
-            wsi_dataframe["wsi_labels"][wsi_df_row] = np.array([np.max([wsi_dataframe['Gleason_primary'][wsi_df_row] -2,0]),
-                                                                np.max([wsi_dataframe['Gleason_secondary'][wsi_df_row] -2,0])])
-            if wsi_dataframe['slide_id'][wsi_df_row] in dataframe["image_path"][instance_df_row]:
-                dataframe["wsi"][instance_df_row] = wsi_dataframe['slide_id'][wsi_df_row]
-                dataframe["wsi_labels"][instance_df_row] = wsi_dataframe["wsi_labels"][wsi_df_row]
-    return dataframe, wsi_dataframe
+    dataframe['wsi_index'] = -1
+    dataframe["wsi_primary_label"] = -1
+    dataframe["wsi_secondary_label"] = -1
+    for row in range(len(wsi_dataframe)):
+        id_bool = dataframe['wsi'].str.match(wsi_dataframe['slide_id'][row])
+        dataframe['wsi_index'][id_bool] = row
+        dataframe['wsi_primary_label'][id_bool] = np.max([wsi_dataframe['Gleason_primary'][row] - 2, 0])
+        dataframe['wsi_secondary_label'][id_bool] = np.max([wsi_dataframe['Gleason_secondary'][row] - 2, 0])
+    assert(np.all(dataframe['wsi_index'] != -1))
+    assert(np.all(dataframe['wsi_primary_label'] != -1))
+    assert(np.all(dataframe['wsi_secondary_label'] != -1))
+    return dataframe
+
+# def set_wsi_labels(dataframe, wsi_dataframe):
+#     dataframe["wsi"] = np.NaN
+#     dataframe["wsi_labels"] = np.NaN
+#     dataframe["wsi_labels"] = dataframe["wsi_labels"].astype(object)
+#     wsi_dataframe["wsi_labels"] = np.NaN
+#     wsi_dataframe["wsi_labels"] = wsi_dataframe["wsi_labels"].astype(object)
+#     wsi_dataframe['wsi_max_gleason_grade'] = np.max \
+#         ([wsi_dataframe['Gleason_primary'], wsi_dataframe['Gleason_secondary']], axis=0)
+#     for wsi_df_row in range(len(wsi_dataframe["slide_id"])):
+#         for instance_df_row in range(len(dataframe["image_path"])):
+#             # wsi_dataframe["wsi_labels"][wsi_df_row] = np.arange \
+#             #     (np.max(wsi_dataframe['wsi_max_gleason_grade'][wsi_df_row] - 1, 0))
+#             wsi_dataframe["wsi_labels"][wsi_df_row] = np.array([np.max([wsi_dataframe['Gleason_primary'][wsi_df_row] -2,0]),
+#                                                                 np.max([wsi_dataframe['Gleason_secondary'][wsi_df_row] -2,0])])
+#             if wsi_dataframe['slide_id'][wsi_df_row] in dataframe["image_path"][instance_df_row]:
+#                 dataframe["wsi"][instance_df_row] = wsi_dataframe['slide_id'][wsi_df_row]
+#                 dataframe["wsi_labels"][instance_df_row] = wsi_dataframe["wsi_labels"][wsi_df_row]
+#     return dataframe, wsi_dataframe
 
 def get_rows_of_visible_instances(dataframe, wsi_dataframe, num_instance_samples):
     rows_of_visible_instance_labels = []

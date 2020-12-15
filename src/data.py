@@ -88,7 +88,6 @@ class DataGenerator():
         return generator
 
     def load_dataframes(self, split):
-
         if self.data_config["dataset_name"] == "breast_hist_images":
             if split == 'train':
                 train_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "train.txt"))
