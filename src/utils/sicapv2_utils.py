@@ -22,6 +22,7 @@ def extract_sicap_df_info(dataframe_raw, wsi_df, data_config, split='train'):
             [dataframe_raw["NC"], dataframe_raw["G3"], dataframe_raw["G4"], dataframe_raw["G5"]],
             axis=0).astype(str)
 
+    dataframe = dataframe.sort_values(by=['image_path'])
     # return dataframe with some instance labels
     return dataframe
 
