@@ -38,6 +38,7 @@ class MILModel:
 
         steps_all = np.ceil(train_generator_strong_aug.n / self.batch_size)
         steps_positive_bags_only = np.ceil(train_generator_weak_aug.n / self.batch_size)
+
         num_pseudo_labels = self.config['data']['positive_pseudo_instance_labels_per_bag']
         label_weights = self.config['data']['label_weights']
 

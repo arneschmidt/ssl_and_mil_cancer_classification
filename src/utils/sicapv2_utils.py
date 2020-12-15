@@ -22,7 +22,9 @@ def extract_sicap_df_info(dataframe_raw, wsi_df, data_config, split='train'):
             [dataframe_raw["NC"], dataframe_raw["G3"], dataframe_raw["G4"], dataframe_raw["G5"]],
             axis=0).astype(str)
 
-    dataframe = dataframe.sort_values(by=['image_path'])
+    dataframe = dataframe.sort_values(by=['image_path'], ignore_index=True)
+    dataframe = dataframe.reset_index(inplace=False)
+
     # return dataframe with some instance labels
     return dataframe
 
@@ -47,7 +49,7 @@ def set_wsi_labels(dataframe, wsi_dataframe):
     dataframe["wsi_primary_label"] = -1
     dataframe["wsi_secondary_label"] = -1
     for row in range(len(wsi_dataframe)):
-        id_bool = dataframe['wsi'].str.match(wsi_dataframe['slide_id'][row])
+        id_bool = dataframe['wsi']==wsi_dataframe['slide_id'][row]
         dataframe['wsi_index'][id_bool] = row
         dataframe['wsi_primary_label'][id_bool] = np.max([wsi_dataframe['Gleason_primary'][row] - 2, 0])
         dataframe['wsi_secondary_label'][id_bool] = np.max([wsi_dataframe['Gleason_secondary'][row] - 2, 0])

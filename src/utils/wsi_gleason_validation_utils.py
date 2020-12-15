@@ -38,7 +38,7 @@ def get_predictions_per_wsi(patch_dataframe, predictions):
     row = 0
     while True:
         wsi_name = patch_dataframe['wsi'][row]
-        wsi_df = patch_dataframe[patch_dataframe['wsi'].str.match(wsi_name)]
+        wsi_df = patch_dataframe[patch_dataframe['wsi'] == wsi_name]
         end_row_wsi = row + len(wsi_df)
         for class_id in range(len(num_predictions_per_class)):
             num_predictions_per_class[class_id] = np.count_nonzero(predictions[row:end_row_wsi] == class_id)
