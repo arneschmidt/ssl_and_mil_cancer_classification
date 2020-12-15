@@ -76,7 +76,7 @@ def set_wsi_labels(dataframe, wsi_dataframe):
 
 def get_rows_of_visible_instances(dataframe, wsi_dataframe, num_instance_samples):
     rows_of_visible_instance_labels = []
-    for wsi_df_row in range(len(wsi_dataframe["wsi_labels"])):
+    for wsi_df_row in range(len(wsi_dataframe["Gleason_primary"])):
         if wsi_dataframe['Gleason_primary'][wsi_df_row] == wsi_dataframe['Gleason_secondary'][wsi_df_row] == 0:
             negative_bag = True
         else:
