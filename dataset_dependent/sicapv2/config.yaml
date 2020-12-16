@@ -4,7 +4,7 @@ data:
 #  data_split_dir: /home/arne/projects/cancer_classification/dev_branch2/cancer_classification/dataset_dependent/sicapv2/dummy_dataset/mil/
   dir: /data/BasesDeDatos/SICAP/SICAPv2_MIL/
   data_split_dir: /data/BasesDeDatos/SICAP/SICAPv2_MIL/partition_mil/Validation/Val1
-  artifact_dir: ./dataset_dependent/sicapv2/experiments/
+  artifact_dir: ./dataset_dependent/sicapv2/
   image_target_size: [250, 250]
   num_classes: 4
   wsi_gleason_score_validation: False
