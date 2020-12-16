@@ -17,9 +17,10 @@ def get_pseudo_labels(predictions, train_df, unlabeled_index, number_of_pseudo_l
     row = 0
     pseudo_labels = np.full(shape=len(predictions), fill_value=unlabeled_index)
     while True:
-        wsi_name = train_df['wsi'][row]
-        wsi_labels = train_df['wsi_labels'][row]
-        wsi_df = train_df[train_df['wsi'].str.match(wsi_name)]
+        # select
+        wsi_name = train_df['wsi'].iloc[row]
+        wsi_labels = [train_df['wsi_primary_label'][row], train_df['wsi_secondary_label'][row]]
+        wsi_df = train_df[train_df['wsi']==wsi_name]
         end_row_wsi = row + len(wsi_df)
 
         if not wsi_labels[0] == wsi_labels[1] == 0: # means: positive bag
@@ -30,6 +31,8 @@ def get_pseudo_labels(predictions, train_df, unlabeled_index, number_of_pseudo_l
                 pseudo_labels[top_indices] = wsi_label
         if end_row_wsi == len(train_df):
             break
+        elif end_row_wsi > len(train_df):
+            raise Exception('Error in pseudo labeling with dataframes')
         else:
             row = end_row_wsi
     return pseudo_labels
