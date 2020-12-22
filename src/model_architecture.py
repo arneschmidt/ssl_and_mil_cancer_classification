@@ -4,7 +4,8 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 import numpy as np
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
-from tensorflow.keras.applications.efficientnet import EfficientNetB0, EfficientNetB1, EfficientNetB2, EfficientNetB3, EfficientNetB4, EfficientNetB5
+from tensorflow.keras.applications.efficientnet import EfficientNetB0, EfficientNetB1, EfficientNetB2, \
+    EfficientNetB3, EfficientNetB4, EfficientNetB5, EfficientNetB6, EfficientNetB7
 from tensorflow.keras.applications.resnet50 import ResNet50
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Conv2D, Dropout, MaxPool2D, Flatten, GlobalMaxPool2D, SeparableConv2D
@@ -37,6 +38,10 @@ def create_feature_extactor(config):
         feature_extractor.add(EfficientNetB4(include_top=False, input_shape=input_shape, weights=weights, pooling='avg'))
     elif feature_extractor_type == "efficientnetb5":
         feature_extractor.add(EfficientNetB5(include_top=False, input_shape=input_shape, weights=weights, pooling='avg'))
+    elif feature_extractor_type == "efficientnetb6":
+        feature_extractor.add(EfficientNetB6(include_top=False, input_shape=input_shape, weights=weights, pooling='avg'))
+    elif feature_extractor_type == "efficientnetb7":
+        feature_extractor.add(EfficientNetB7(include_top=False, input_shape=input_shape, weights=weights, pooling='avg'))
     elif feature_extractor_type == "resnet50":
         feature_extractor.add(ResNet50(include_top=False, input_shape=input_shape, weights=weights, pooling='avg'))
     elif feature_extractor_type == "simple_cnn":
