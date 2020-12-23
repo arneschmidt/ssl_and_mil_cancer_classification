@@ -1,0 +1,6 @@
+image_id,data_provider,isup_grade,gleason_score,Partition
+0005f7aaab2800f6170c399693a96917,karolinska,0,0+0,train
+001c62abd11fa4b57bf7a6c603a11bb9,karolinska,4,4+4,train
+001d865e65ef5d2579c190a0e0350d8f,karolinska,0,0+0,val
+0018ae58b01bdadc8e347995b69f99aa,radboud,4,4+4,test
+00bbc1482301d16de3ff63238cfd0b34,radboud,2,3+4,train
