@@ -28,6 +28,7 @@ class DataGenerator():
                 self.num_training_samples = self.train_generator.n
             self.validation_generator = self.data_generator_from_dataframe(self.val_df)
         elif mode =='test':
+	    self.num_training_samples = None	
             self.load_dataframes(split='test')
             self.test_generator = self.data_generator_from_dataframe(self.test_df)
         else:
