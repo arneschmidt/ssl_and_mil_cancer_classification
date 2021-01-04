@@ -22,9 +22,9 @@ class DataGenerator():
             if data_config['supervision'] == 'mil':
                 self.train_generator_strong_aug = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong',
                                                                                      shuffle=True, target_mode='index')
-                self.train_generator_weak_aug = self.data_generator_from_dataframe(self.train_df, image_augmentation='weak',
-                                                                                   shuffle=False, target_mode='None',
-                                                                                   positive_bags_only=False)
+                self.train_df_weak_aug = self.train_df[self.train_df['wsi_contains_unlabeled']]
+                self.train_generator_weak_aug = self.data_generator_from_dataframe(self.train_df_weak_aug, image_augmentation='weak',
+                                                                                   shuffle=False, target_mode='None')
                 self.num_training_samples = self.train_generator_weak_aug.n
             else:
                 self.train_generator = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong', shuffle=True)
@@ -38,7 +38,7 @@ class DataGenerator():
             raise Exception('Choose valid model mode')
 
     def data_generator_from_dataframe(self, dataframe: pd.DataFrame, image_augmentation='None', shuffle=False,
-                                      target_mode='class', positive_bags_only=False):
+                                      target_mode='class'):
         if image_augmentation == 'weak':
             datagen = ImageDataGenerator(
                 brightness_range=self.data_config["weak_augment_brightness_range"],
@@ -72,8 +72,6 @@ class DataGenerator():
             classes = None
 
         dataframe['index'] = dataframe.index
-        if positive_bags_only:
-            dataframe = dataframe[dataframe['class'] != "0"]
 
         generator = datagen.flow_from_dataframe(
             dataframe=dataframe,
