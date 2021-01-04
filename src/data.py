@@ -33,6 +33,7 @@ class DataGenerator():
         elif mode =='test':
             self.load_dataframes(split='test')
             self.test_generator = self.data_generator_from_dataframe(self.test_df)
+            self.num_training_samples = self.test_generator.n
         else:
             raise Exception('Choose valid model mode')
 
