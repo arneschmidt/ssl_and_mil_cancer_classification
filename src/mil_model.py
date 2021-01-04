@@ -73,7 +73,7 @@ class MILModel:
         )
         metrics = format_metrics_for_mlflow(metrics)
         if self.config["data"]["wsi_gleason_score_validation"]:
-            wsi_metrics, confusion_matrices = get_wsi_gleason_metrics(self.model, data_gen.validation_generator, data_gen.val_df,
+            wsi_metrics, confusion_matrices = get_wsi_gleason_metrics(self.model, data_gen.test_generator, data_gen.test_df,
                                                       data_gen.wsi_df, self.batch_size)
             metrics.update(wsi_metrics)
             save_confusion_matrices(confusion_matrices, self.config['output_dir'])

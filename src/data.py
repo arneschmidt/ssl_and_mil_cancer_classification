@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from utils.sicapv2_utils import extract_sicap_df_info
+from utils.data_utils import extract_df_info
 
 # TODO: add multiple instance learning setting
 class DataGenerator():
@@ -14,6 +14,9 @@ class DataGenerator():
         self.val_df = None
         self.test_df = None
         self.wsi_df = None
+        self._create_data_generators(mode, data_config)
+
+    def _create_data_generators(self, mode, data_config):
         if mode == 'train' or mode == 'predict_features' or mode == 'predict':
             self.load_dataframes(split='train')
             if data_config['supervision'] == 'mil':
@@ -30,6 +33,7 @@ class DataGenerator():
         elif mode =='test':
             self.load_dataframes(split='test')
             self.test_generator = self.data_generator_from_dataframe(self.test_df)
+            self.num_training_samples = self.test_generator.n
         else:
             raise Exception('Choose valid model mode')
 
@@ -104,11 +108,25 @@ class DataGenerator():
             self.wsi_df = pd.read_excel(os.path.join(self.data_config["dir"], "wsi_labels.xlsx"))
             if split == 'train':
                 train_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Train.xlsx"))
-                self.train_df = extract_sicap_df_info(train_df_raw, self.wsi_df, self.data_config, split='train')
+                self.train_df = extract_df_info(train_df_raw, self.wsi_df, self.data_config, split='train')
                 val_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Test.xlsx"))
-                self.val_df = extract_sicap_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
+                self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
             elif split == 'test':
                 test_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Test.xlsx"))
-                self.test_df = extract_sicap_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
+                self.test_df = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
+        elif self.data_config["dataset_name"] == "panda":
+            wsi_df = pd.read_csv(os.path.join(self.data_config["dir"], "wsi_labels.csv"))
+            wsi_df['Gleason_primary'] = wsi_df['gleason_score'].str.split('+').str[0]
+            wsi_df['Gleason_secondary'] = wsi_df['gleason_score'].str.split('+').str[1]
+            wsi_df.rename(columns={"image_id": "slide_id"}, inplace=True)
+            self.wsi_df = wsi_df
+            if split == 'train':
+                train_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "train_patches.csv"))
+                self.train_df = extract_df_info(train_df_raw, self.wsi_df, self.data_config, split='train')
+                val_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val_patches.csv"))
+                self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
+            elif split == 'test':
+                test_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "test_patches.csv"))
+                self.test_df = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
         else:
             raise Exception("Please choose valid dataset name!")

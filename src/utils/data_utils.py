@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 
-def extract_sicap_df_info(dataframe_raw, wsi_df, data_config, split='train'):
+def extract_df_info(dataframe_raw, wsi_df, data_config, split='train'):
     print('Preparing data split '+split)
     # Notice: class 0 = NC, class 1 = G3, class 2 = G4, class 3 = G5
     dataframe = pd.DataFrame()
@@ -51,8 +51,8 @@ def set_wsi_labels(dataframe, wsi_dataframe):
     for row in range(len(wsi_dataframe)):
         id_bool = dataframe['wsi']==wsi_dataframe['slide_id'][row]
         dataframe['wsi_index'][id_bool] = row
-        dataframe['wsi_primary_label'][id_bool] = np.max([wsi_dataframe['Gleason_primary'][row] - 2, 0])
-        dataframe['wsi_secondary_label'][id_bool] = np.max([wsi_dataframe['Gleason_secondary'][row] - 2, 0])
+        dataframe['wsi_primary_label'][id_bool] = np.max([int(wsi_dataframe['Gleason_primary'][row]) - 2, 0])
+        dataframe['wsi_secondary_label'][id_bool] = np.max([int(wsi_dataframe['Gleason_secondary'][row]) - 2, 0])
     assert(np.all(dataframe['wsi_index'] != -1))
     assert(np.all(dataframe['wsi_primary_label'] != -1))
     assert(np.all(dataframe['wsi_secondary_label'] != -1))
