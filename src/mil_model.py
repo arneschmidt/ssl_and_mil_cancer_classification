@@ -38,6 +38,7 @@ class MILModel:
 
         steps_all = np.ceil(train_generator_strong_aug.n / self.batch_size)
         steps_positive_bags_only = np.ceil(train_generator_weak_aug.n / self.batch_size)
+        predictions_indices = np.array(data_gen.train_df_weak_aug['index'])
 
         num_pseudo_labels = self.config['data']['positive_pseudo_instance_labels_per_bag']
         label_weights = self.config['data']['label_weights']
@@ -45,7 +46,8 @@ class MILModel:
         for epoch in range(self.config["model"]["epochs"]):
             print('Make predictions to produce pseudo labels..')
             predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps_positive_bags_only, verbose=1)
-            training_targets, sample_weights = combine_pseudo_labels_with_instance_labels(predictions, data_gen.train_df, num_pseudo_labels, label_weights)
+            training_targets, sample_weights = combine_pseudo_labels_with_instance_labels(predictions, predictions_indices,
+                                                                                          data_gen.train_df, num_pseudo_labels, label_weights)
 
             if self.config["model"]["class_weighted_loss"]:
                 class_weights = self._calculate_class_weights(training_targets)
