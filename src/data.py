@@ -22,7 +22,6 @@ class DataGenerator():
             if data_config['supervision'] == 'mil':
                 self.train_generator_strong_aug = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong',
                                                                                      shuffle=True, target_mode='index')
-                self.train_df_weak_aug = self.train_df[self.train_df['wsi_contains_unlabeled']]
                 self.train_generator_weak_aug = self.data_generator_from_dataframe(self.train_df_weak_aug, image_augmentation='weak',
                                                                                    shuffle=False, target_mode='None')
                 self.num_training_samples = self.train_generator_weak_aug.n
@@ -33,7 +32,9 @@ class DataGenerator():
         elif mode =='test':
             self.load_dataframes(split='test')
             self.test_generator = self.data_generator_from_dataframe(self.test_df)
-            self.num_training_samples = self.test_generator.n
+            if data_config["wsi_gleason_score_validation"]:
+                self.test_generator_with_unlabeled = self.data_generator_from_dataframe(self.test_df_with_unlabeled)
+            self.num_training_samples = self.test_generator.n # just formally necessary for model initialization
         else:
             raise Exception('Choose valid model mode')
 
@@ -107,11 +108,13 @@ class DataGenerator():
             if split == 'train':
                 train_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Train.xlsx"))
                 self.train_df = extract_df_info(train_df_raw, self.wsi_df, self.data_config, split='train')
+                self.train_df_weak_aug = self.train_df[self.train_df['wsi_contains_unlabeled']]
                 val_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Test.xlsx"))
                 self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
             elif split == 'test':
                 test_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Test.xlsx"))
-                self.test_df = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
+                self.test_df_with_unlabeled = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
+                self.test_df = self.test_df_with_unlabeled[self.test_df_with_unlabeled["class"].str.match('4') == False].reset_index(inplace=False)
         elif self.data_config["dataset_name"] == "panda":
             wsi_df = pd.read_csv(os.path.join(self.data_config["dir"], "wsi_labels.csv"))
             wsi_df['Gleason_primary'] = wsi_df['gleason_score'].str.split('+').str[0]
@@ -121,10 +124,12 @@ class DataGenerator():
             if split == 'train':
                 train_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "train_patches.csv"))
                 self.train_df = extract_df_info(train_df_raw, self.wsi_df, self.data_config, split='train')
+                self.train_df_weak_aug = self.train_df[self.train_df['wsi_contains_unlabeled']]
                 val_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val_patches.csv"))
                 self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
             elif split == 'test':
                 test_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "test_patches.csv"))
-                self.test_df = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
+                self.test_df_with_unlabeled = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
+                self.test_df = self.test_df_with_unlabeled[self.test_df_with_unlabeled["class"].str.match('4') == False].reset_index(inplace=False)
         else:
             raise Exception("Please choose valid dataset name!")

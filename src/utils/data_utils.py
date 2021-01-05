@@ -42,7 +42,7 @@ def adopt_dataframe_to_mil(dataframe, wsi_dataframe, num_instance_samples, split
     # elif split == 'val':
     #     rows_of_visible_instance_labels = get_rows_of_visible_instances(dataframe, wsi_dataframe, num_instance_samples)
     #     dataframe = dataframe[rows_of_visible_instance_labels]
-    else:
+    elif split == 'val':
         dataframe = dataframe[dataframe["class"].str.match('4') == False].reset_index(inplace=False)
 
     return dataframe
