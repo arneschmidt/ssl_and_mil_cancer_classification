@@ -117,8 +117,8 @@ class DataGenerator():
                 self.test_df = self.test_df_with_unlabeled[self.test_df_with_unlabeled["class"].str.match('4') == False].reset_index(inplace=False)
         elif self.data_config["dataset_name"] == "panda":
             wsi_df = pd.read_csv(os.path.join(self.data_config["dir"], "wsi_labels.csv"))
-            wsi_df['Gleason_primary'] = wsi_df['gleason_score'].str.split('+').str[0]
-            wsi_df['Gleason_secondary'] = wsi_df['gleason_score'].str.split('+').str[1]
+            wsi_df['Gleason_primary'] = wsi_df['gleason_score'].str.split('+').str[0].astype(int)
+            wsi_df['Gleason_secondary'] = wsi_df['gleason_score'].str.split('+').str[1].astype(int)
             wsi_df.rename(columns={"image_id": "slide_id"}, inplace=True)
             self.wsi_df = wsi_df
             if split == 'train':

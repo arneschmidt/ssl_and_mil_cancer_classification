@@ -22,6 +22,7 @@ class MLFlowLogger:
 
     def test_logging(self, metrics: Dict):
         mlflow.log_metrics(metrics)
+        print(metrics)
 
     def log_artifacts(self):
         mlflow.log_artifacts(self.config['output_dir'])

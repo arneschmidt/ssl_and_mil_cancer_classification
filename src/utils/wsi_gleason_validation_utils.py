@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
 
 def get_wsi_gleason_metrics(model, data_gen, patch_dataframe, wsi_dataframe, batch_size):
-    predictions = model.predict(data_gen, batch_size=batch_size, steps=np.ceil(data_gen.n / batch_size))
+    predictions = model.predict(data_gen, batch_size=batch_size, steps=np.ceil(data_gen.n / batch_size), verbose=1)
     wsi_predict_dataframe = get_predictions_per_wsi(patch_dataframe, predictions)
     wsi_gt_dataframe = wsi_dataframe[wsi_dataframe['slide_id'].isin(wsi_predict_dataframe['slide_id'])]
 
