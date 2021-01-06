@@ -26,11 +26,8 @@ class MILModel:
         print(self.model.layers[1].summary())
 
     def train(self, data_gen):
-        if self.config["logging"]["log_experiment"]:
-            mlflow_callback = MLFlowCallback(self.config)
-            callbacks = [mlflow_callback]
-        else:
-            callbacks = []
+        mlflow_callback = MLFlowCallback(self.config)
+        callbacks = [mlflow_callback]
 
         train_generator_weak_aug = data_gen.train_generator_weak_aug
         train_generator_strong_aug = data_gen.train_generator_strong_aug

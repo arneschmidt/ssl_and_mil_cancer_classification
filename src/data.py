@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from utils.data_utils import extract_df_info
 
@@ -133,3 +134,21 @@ class DataGenerator():
                 self.test_df = self.test_df_with_unlabeled[self.test_df_with_unlabeled["class"].str.match('4') == False].reset_index(inplace=False)
         else:
             raise Exception("Please choose valid dataset name!")
+
+    def get_train_data_statistics(self):
+        train_df = self.train_df
+        wsi_df = self.wsi_df
+        wsi_names = np.unique(np.array(train_df['wsi']))
+        out_dict = {}
+        out_dict['number_of_wsis'] = len(wsi_names)
+        out_dict['number_of_patches'] = len(train_df)
+        if self.data_config["dataset_name"] == "sicapv2" or self.data_config["dataset_name"] == "panda":
+            out_dict['number_of_negative_patch_labels'] = np.sum(train_df['class'] == '0')
+            out_dict['number_of_positive_patch_labels'] = np.sum(train_df['class'] == '1')\
+                                                          + np.sum(train_df['class'] == '2') \
+                                                          + np.sum(train_df['class'] == '3')
+            out_dict['number_of_unlabeled_patches'] = np.sum(train_df['class'] == '4')
+
+
+        return out_dict
+

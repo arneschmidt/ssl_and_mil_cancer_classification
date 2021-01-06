@@ -25,10 +25,9 @@ class SupervisedModel:
     def train(self, data_gen):
         train_data_generator = data_gen.train_generator
         val_data_generator = data_gen.validation_generator
-        if self.config["logging"]["log_experiment"]:
-            callbacks = [MLFlowCallback(self.config)]
-        else:
-            callbacks = []
+
+        callbacks = [MLFlowCallback(self.config)]
+        callbacks = []
 
         if self.config["model"]["class_weighted_loss"] and self.config['model']['use_fixed_class_weights'] is False:
             class_weights_array = class_weight.compute_class_weight(

@@ -41,7 +41,6 @@ data:
     negative_gt_labels: 1.0
 
 logging:
-  log_experiment: True
   log_artifacts: False
   run_name: efficientnetb1
   tracking_url: /home/arne/projects/mlruns
