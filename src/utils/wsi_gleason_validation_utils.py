@@ -12,18 +12,18 @@ def get_wsi_gleason_metrics(model, data_gen, patch_dataframe, wsi_dataframe, bat
 
     metrics_dict = {}
 
-    metrics_dict['wsi_gs_cohens_quadratic_kappa'] = cohen_kappa_score(wsi_predict_dataframe['gleason_score'],
-                                                                 wsi_gt_dataframe['gleason_score'],
-                                                                 weights='quadratic')
-    metrics_dict['wsi_isup_cohens_quadratic_kappa'] = cohen_kappa_score(wsi_predict_dataframe['isup_grade'],
-                                                                   wsi_gt_dataframe['isup_grade'],
-                                                                   weights='quadratic')
+    metrics_dict['wsi_gs_cohens_quadratic_kappa'] = cohen_kappa_score(wsi_gt_dataframe['gleason_score'],
+                                                                      wsi_predict_dataframe['gleason_score'],
+                                                                      weights='quadratic')
+    metrics_dict['wsi_isup_cohens_quadratic_kappa'] = cohen_kappa_score(wsi_gt_dataframe['isup_grade'],
+                                                                        wsi_predict_dataframe['isup_grade'],
+                                                                        weights='quadratic')
     confusion_matrices = {}
-    confusion_matrices['wsi_gs_confusion_matrix'] = confusion_matrix(wsi_predict_dataframe['gleason_score'],
-                                                                     wsi_gt_dataframe['gleason_score'],
+    confusion_matrices['wsi_gs_confusion_matrix'] = confusion_matrix(wsi_gt_dataframe['gleason_score'],
+                                                                     wsi_predict_dataframe['gleason_score'],
                                                                      labels=[0, 6, 7, 8, 9, 10])
-    confusion_matrices['wsi_isup_confusion_matrix'] = confusion_matrix(wsi_predict_dataframe['isup_grade'],
-                                                                       wsi_gt_dataframe['isup_grade'],
+    confusion_matrices['wsi_isup_confusion_matrix'] = confusion_matrix(wsi_gt_dataframe['isup_grade'],
+                                                                       wsi_predict_dataframe['isup_grade'],
                                                                        labels=[0, 1, 2, 3, 4, 5])
     return metrics_dict, confusion_matrices
 

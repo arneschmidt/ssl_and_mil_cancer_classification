@@ -73,6 +73,7 @@ class MILModel:
             return_dict=True
         )
         metrics = format_metrics_for_mlflow(metrics)
+        metrics ={}
         if self.config["data"]["wsi_gleason_score_validation"]:
             wsi_metrics, confusion_matrices = get_wsi_gleason_metrics(self.model, data_gen.test_generator_with_unlabeled,
                                                                       data_gen.test_df_with_unlabeled, data_gen.wsi_df,
