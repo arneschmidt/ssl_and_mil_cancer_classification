@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
 
-def get_wsi_gleason_metrics(model, data_gen, patch_dataframe, wsi_dataframe, batch_size):
+def get_wsi_gleason_metrics(model, data_gen, patch_dataframe, wsi_dataframe, batch_size, confidence_threshold=0.6, num_patch_threshold=3):
     predictions = model.predict(data_gen, batch_size=batch_size, steps=np.ceil(data_gen.n / batch_size), verbose=1)
-    wsi_predict_dataframe = get_predictions_per_wsi(patch_dataframe, predictions)
+    wsi_predict_dataframe = get_predictions_per_wsi(patch_dataframe, predictions, confidence_threshold, num_patch_threshold)
     wsi_gt_dataframe = wsi_dataframe[wsi_dataframe['slide_id'].isin(wsi_predict_dataframe['slide_id'])]
 
     wsi_predict_dataframe = get_gleason_score_and_isup_grade(wsi_predict_dataframe)
@@ -28,8 +28,9 @@ def get_wsi_gleason_metrics(model, data_gen, patch_dataframe, wsi_dataframe, bat
     return metrics_dict, confusion_matrices
 
 
-def get_predictions_per_wsi(patch_dataframe, predictions):
-    predictions = np.argmax(predictions, axis=1)
+def get_predictions_per_wsi(patch_dataframe, predictions_softmax, confidence_threshold, num_patch_threshold):
+    confidences = np.max(predictions_softmax, axis=1)
+    predictions = np.argmax(predictions_softmax, axis=1)
     wsi_names = []
     wsi_primary = []
     wsi_secondary = []
@@ -41,8 +42,15 @@ def get_predictions_per_wsi(patch_dataframe, predictions):
         wsi_df = patch_dataframe[patch_dataframe['wsi'] == wsi_name]
         end_row_wsi = row + len(wsi_df)
         for class_id in range(len(num_predictions_per_class)):
-            num_predictions_per_class[class_id] = np.count_nonzero(predictions[row:end_row_wsi] == class_id)
-        # not cancerous
+            class_id_predicted = np.logical_and(predictions[row:end_row_wsi] == class_id,
+                                                confidences[row:end_row_wsi] > confidence_threshold)
+            num_predictions = np.count_nonzero(class_id_predicted)
+            # filter out outliers
+            if num_predictions < num_patch_threshold:
+                num_predictions_per_class[class_id] = 0
+            else:
+                num_predictions_per_class[class_id] = num_predictions
+            # not cancerous
         if num_predictions_per_class[1] == num_predictions_per_class[2] == num_predictions_per_class[3] == 0:
             primary = 0
             secondary = 0

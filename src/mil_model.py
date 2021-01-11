@@ -61,7 +61,9 @@ class MILModel:
             )
             if self.config["data"]["wsi_gleason_score_validation"] and epoch%5 == 0:
                 metrics_dict, _ = get_wsi_gleason_metrics(self.model, data_gen.validation_generator, data_gen.val_df,
-                                                          data_gen.wsi_df, self.batch_size)
+                                                          data_gen.wsi_df, self.batch_size,
+                                                          self.config['model']['confidence_threshold'],
+                                                          self.config['model']['num_patch_threshold'])
                 mlflow_callback.log_wsi_results(metrics_dict)
 
     def test(self, data_gen):
@@ -74,7 +76,9 @@ class MILModel:
         if self.config["data"]["wsi_gleason_score_validation"]:
             wsi_metrics, confusion_matrices = get_wsi_gleason_metrics(self.model, data_gen.test_generator_with_unlabeled,
                                                                       data_gen.test_df_with_unlabeled, data_gen.wsi_df,
-                                                                      self.batch_size)
+                                                                      self.batch_size,
+                                                                      self.config['model']['confidence_threshold'],
+                                                                      self.config['model']['num_patch_threshold'])
             metrics.update(wsi_metrics)
             save_confusion_matrices(confusion_matrices, self.config['output_dir'])
         return metrics
