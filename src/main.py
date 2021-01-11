@@ -12,9 +12,8 @@ from mlflow_log import MLFlowLogger
 def main(config):
     devices = tf.config.experimental.list_physical_devices('GPU')
     tf.config.experimental.set_memory_growth(devices[0], True)
-    if config["logging"]["log_experiment"]:
-        logger = MLFlowLogger(config)
-        logger.config_logging()
+    logger = MLFlowLogger(config)
+    logger.config_logging()
 
     print("Create data generators..")
     data_gen = DataGenerator(config["data"], config["model"]["batch_size"], config['model']['mode'])
@@ -27,12 +26,12 @@ def main(config):
 
     if config["model"]["mode"] == "train":
         print("Train")
+        logger.data_logging(data_gen.get_train_data_statistics())
         model.train(data_gen)
     elif config["model"]["mode"] == "test":
         print("Test")
         metrics = model.test(data_gen)
-        if config["logging"]["log_experiment"]:
-            logger.test_logging(metrics)
+        logger.test_logging(metrics)
     elif config["model"]["mode"] == "predict":
         print("Predict")
         model.predict(data_gen)

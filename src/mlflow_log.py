@@ -20,6 +20,9 @@ class MLFlowLogger:
         mlflow.log_param('head_type', head_type)
         mlflow.log_params(self.config['model']['head'][head_type])
 
+    def data_logging(self, data_dict):
+        mlflow.log_params(data_dict)
+
     def test_logging(self, metrics: Dict):
         mlflow.log_metrics(metrics)
         print(metrics)
