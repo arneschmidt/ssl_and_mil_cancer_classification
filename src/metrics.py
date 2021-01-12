@@ -24,6 +24,7 @@ class MetricCalculator():
             self.test_df = data_gen.test_df
 
     def calc_metrics(self):
+        print('Calculate metrics for ' + self.mode)
         val_predictions, test_predictions = self.get_predictions()
         metrics = {}
         confusion_matrices = {}
