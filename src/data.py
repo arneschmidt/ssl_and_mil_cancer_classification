@@ -33,7 +33,7 @@ class DataGenerator():
             self.validation_generator = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
         elif mode =='test':
             self.load_dataframes(split='test')
-            self.validation_generator = self.data_generator_from_dataframe(self.val_df)
+            self.validation_generator = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
             self.test_generator = self.data_generator_from_dataframe(self.test_df, target_mode='raw')
             self.num_training_samples = self.test_generator.n # just formally necessary for model initialization
         else:
