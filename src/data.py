@@ -34,7 +34,7 @@ class DataGenerator():
             self.load_dataframes(split='test')
             self.test_generator = self.data_generator_from_dataframe(self.test_df)
             if data_config["wsi_gleason_score_validation"]:
-                self.test_generator_with_unlabeled = self.data_generator_from_dataframe(self.test_df_with_unlabeled)
+                self.test_generator_with_unlabeled = self.data_generator_from_dataframe(self.test_df_with_unlabeled, target_mode='raw')
             self.num_training_samples = self.test_generator.n # just formally necessary for model initialization
         else:
             raise Exception('Choose valid model mode')
