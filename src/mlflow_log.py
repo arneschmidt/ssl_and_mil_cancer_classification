@@ -45,22 +45,22 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
             metrics_dict = format_metrics_for_mlflow(logs.copy())
             mlflow.log_metrics(metrics_dict, step=current_step)
 
-    def on_epoch_end(self, epoch: int, logs=None):
+    def customized_logging_on_epoch_end(self, epoch: int, metrics_dict: Dict):
         self.finished_epochs = epoch + 1
         current_step = int(self.finished_epochs * self.params['steps'])
 
-        metrics_dict = format_metrics_for_mlflow(logs.copy())
         mlflow.log_metrics(metrics_dict, step=current_step)
         mlflow.log_metric('finished_epochs', self.finished_epochs, step=current_step)
 
         # Check if new best model
-        if metrics_dict["val_f1_mean"] > self.best_result:
+        metrics_for_model_saving = self.config['model']['metrics_for_model_saving']
+        if metrics_dict[metrics_for_model_saving] > self.best_result:
             self.new_best_result = True
             print("\n New best model! Saving model..")
-            self.best_result = metrics_dict["val_f1_mean"]
+            self.best_result = metrics_dict[metrics_for_model_saving]
             if self.config["model"]["save_model"]:
                 self._save_model()
-            mlflow.log_metric("best_val_f1_mean", metrics_dict["val_f1_mean"])
+            mlflow.log_metric("best" + metrics_for_model_saving, metrics_dict[metrics_for_model_saving])
             mlflow.log_metric("saved_model_epoch", self.finished_epochs)
         else:
             self.new_best_result = False
