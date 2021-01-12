@@ -27,18 +27,20 @@ def calc_wsi_prostate_cancer_metrics(wsi_predict_dataframe, wsi_gt_dataframe):
 
 
 def get_gleason_score_and_isup_grade(wsi_df):
-    wsi_df['gleason_score'] = wsi_df[['Gleason_primary', 'Gleason_secondary']].sum(axis=1)
+    gleason_primary = np.array(wsi_df['Gleason_primary'])
+    gleason_secondary = np.array(wsi_df['Gleason_secondary'])
+    wsi_df['gleason_score'] = gleason_primary + gleason_secondary
     isup_grade = np.full(shape=len(wsi_df), fill_value=-1)
-    isup_grade = np.where(np.logical_and(wsi_df['Gleason_primary'] == 0, wsi_df['Gleason_secondary'] == 0), 0, isup_grade)
-    isup_grade = np.where(np.logical_and(wsi_df['Gleason_primary'] == 3, wsi_df['Gleason_secondary'] == 3), 1, isup_grade)
-    isup_grade = np.where(np.logical_and(wsi_df['Gleason_primary'] == 3, wsi_df['Gleason_secondary'] == 4), 2, isup_grade)
-    isup_grade = np.where(np.logical_and(wsi_df['Gleason_primary'] == 4, wsi_df['Gleason_secondary'] == 3), 3, isup_grade)
-    isup_grade = np.where(np.logical_and(wsi_df['Gleason_primary'] == 3, wsi_df['Gleason_secondary'] == 5), 4, isup_grade)
-    isup_grade = np.where(np.logical_and(wsi_df['Gleason_primary'] == 4, wsi_df['Gleason_secondary'] == 4), 4, isup_grade)
-    isup_grade = np.where(np.logical_and(wsi_df['Gleason_primary'] == 5, wsi_df['Gleason_secondary'] == 3), 4, isup_grade)
-    isup_grade = np.where(np.logical_and(wsi_df['Gleason_primary'] == 4, wsi_df['Gleason_secondary'] == 5), 5, isup_grade)
-    isup_grade = np.where(np.logical_and(wsi_df['Gleason_primary'] == 5, wsi_df['Gleason_secondary'] == 4), 5, isup_grade)
-    isup_grade = np.where(np.logical_and(wsi_df['Gleason_primary'] == 5, wsi_df['Gleason_secondary'] == 5), 5, isup_grade)
+    isup_grade = np.where(np.logical_and(gleason_primary == 0, gleason_secondary == 0), 0, isup_grade)
+    isup_grade = np.where(np.logical_and(gleason_primary == 3, gleason_secondary == 3), 1, isup_grade)
+    isup_grade = np.where(np.logical_and(gleason_primary == 3, gleason_secondary == 4), 2, isup_grade)
+    isup_grade = np.where(np.logical_and(gleason_primary == 4, gleason_secondary == 3), 3, isup_grade)
+    isup_grade = np.where(np.logical_and(gleason_primary == 3, gleason_secondary == 5), 4, isup_grade)
+    isup_grade = np.where(np.logical_and(gleason_primary == 4, gleason_secondary == 4), 4, isup_grade)
+    isup_grade = np.where(np.logical_and(gleason_primary == 5, gleason_secondary == 3), 4, isup_grade)
+    isup_grade = np.where(np.logical_and(gleason_primary == 4, gleason_secondary == 5), 5, isup_grade)
+    isup_grade = np.where(np.logical_and(gleason_primary == 5, gleason_secondary == 4), 5, isup_grade)
+    isup_grade = np.where(np.logical_and(gleason_primary == 5, gleason_secondary == 5), 5, isup_grade)
     assert(np.all(isup_grade >= 0))
 
     wsi_df['isup_grade'] = isup_grade
@@ -49,7 +51,7 @@ def get_gleason_score_and_isup_grade(wsi_df):
 def calc_gleason_grade(num_predictions_per_class, confidences_per_class, confidence_threshold):
     # don't count outliers, set count to zero if top confidences are low
     for i in range(len(num_predictions_per_class)):
-        if confidences_per_class < confidence_threshold:
+        if confidences_per_class[i] < confidence_threshold:
             num_predictions_per_class[i] = 0
     if num_predictions_per_class[1] == num_predictions_per_class[2] == num_predictions_per_class[3] == 0:
         primary = 0

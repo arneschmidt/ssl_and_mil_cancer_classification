@@ -14,13 +14,13 @@ class MetricCalculator():
         self.metrics_wsi_level = config['model']['metrics_wsi_level']
         if mode == 'val':
             self.val_gen = data_gen.validation_generator
-            self.val_df = data_gen.val.df
+            self.val_df = data_gen.val_df
             self.test_gen = self.val_gen
             self.test_df = self.val_df
         else:
             self.val_gen = data_gen.validation_generator
-            self.val_df = data_gen.val.df
-            self.test_gen = data_gen.test_gen
+            self.val_df = data_gen.val_df
+            self.test_gen = data_gen.test_generator
             self.test_df = data_gen.test_df
 
     def calc_metrics(self):
@@ -32,8 +32,10 @@ class MetricCalculator():
         if self.metrics_wsi_level:
             wsi_metrics, confusion_matrices = self.calc_optimal_wsi_metrics(val_predictions, test_predictions)
             metrics.update(wsi_metrics)
-        self.add_prefix(metrics, self.mode)
-        self.add_prefix(metrics, self.mode)
+        metrics = self.add_prefix(metrics, self.mode)
+        confusion_matrices = self.add_prefix(confusion_matrices, self.mode)
+        print('Metrics ' + self.mode)
+        print(metrics)
         return metrics, confusion_matrices
 
     def get_predictions(self):
@@ -55,11 +57,11 @@ class MetricCalculator():
 
     def calc_patch_level_metrics(self, predictions_softmax):
         predictions = np.argmax(predictions_softmax, axis=1)
-        unlabeled_index = self.num_classes + 1
+        unlabeled_index = self.num_classes
         gt_classes = self.test_df['class']
-        indices_of_labeled_patches = gt_classes[gt_classes != str(unlabeled_index)]
-        gt_classes = np.array(gt_classes[indices_of_labeled_patches])
-        predictions = np.array(predictions[indices_of_labeled_patches])
+        indices_of_labeled_patches = (gt_classes != str(unlabeled_index))
+        gt_classes = np.array(gt_classes[indices_of_labeled_patches]).astype(np.int)
+        predictions = np.array(predictions[indices_of_labeled_patches]).astype(np.int)
 
         metrics ={}
         metrics['accuracy'] = accuracy_score(gt_classes, predictions)
@@ -122,7 +124,7 @@ class MetricCalculator():
                 num_predictions_per_class[class_id] = num_predictions
                 confidences_per_class[class_id] = top_5_conf_average
 
-            if self.dataset_type == 'protstate_cancer':
+            if self.dataset_type == 'prostate_cancer':
                 primary, secondary = calc_gleason_grade(num_predictions_per_class, confidences_per_class, confidence_threshold)
 
             wsi_names.append(wsi_name)
@@ -143,6 +145,6 @@ class MetricCalculator():
     def add_prefix(self, dict, prefix):
         new_dict = {}
         for key in dict.keys():
-            new_key = prefix + 'key'
+            new_key = prefix + '_' + key
             new_dict[new_key] = dict[key]
         return new_dict

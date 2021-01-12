@@ -10,10 +10,10 @@ from sklearn.utils import class_weight
 
 
 class SupervisedModel:
-    def __init__(self, config, num_classes, n_training_points):
+    def __init__(self, config, n_training_points):
         self.n_training_points = n_training_points
         self.batch_size = config["model"]["batch_size"]
-        self.num_classes = num_classes
+        self.num_classes = config["data"]["num_classes"]
         self.config = config
         self.model = create_model(config, self.num_classes, n_training_points)
         if config["model"]["load_model"]:

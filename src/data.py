@@ -6,20 +6,18 @@ from utils.data_utils import extract_df_info
 
 # TODO: add multiple instance learning setting
 class DataGenerator():
-    def __init__(self, config, batch_size, mode):
+    def __init__(self, config):
         self.data_config = config["data"]
         self.model_config = config["model"]
-        self.num_classes = config["data"]["num_classes"]
-        self.batch_size = batch_size
-        self.mode = mode
         self.train_df = None
         self.val_df = None
         self.test_df = None
         self.wsi_df = None
+        self.num_training_samples = 0
         self._create_data_generators()
 
     def _create_data_generators(self):
-        mode = self.mode
+        mode = self.model_config["mode"]
         data_config = self.data_config
         if mode == 'train' or mode == 'predict_features' or mode == 'predict':
             self.load_dataframes(split='train')
@@ -32,7 +30,7 @@ class DataGenerator():
             else:
                 self.train_generator = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong', shuffle=True)
                 self.num_training_samples = self.train_generator.n
-            self.validation_generator = self.data_generator_from_dataframe(self.val_df)
+            self.validation_generator = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
         elif mode =='test':
             self.load_dataframes(split='test')
             self.validation_generator = self.data_generator_from_dataframe(self.val_df)
@@ -65,7 +63,7 @@ class DataGenerator():
         if target_mode == 'class':
             y_col = 'class'
             class_mode = 'categorical'
-            classes = [str(i) for i in range(self.num_classes)]
+            classes = [str(i) for i in range(self.data_config["num_classes"])]
         elif target_mode == 'index':
             y_col = 'index'
             class_mode = 'raw'
@@ -83,7 +81,7 @@ class DataGenerator():
             x_col="image_path",
             y_col=y_col,
             target_size=self.data_config["image_target_size"],
-            batch_size=self.batch_size,
+            batch_size=self.model_config["batch_size"],
             shuffle=shuffle,
             classes=classes,
             class_mode=class_mode,

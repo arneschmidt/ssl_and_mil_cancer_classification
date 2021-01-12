@@ -11,10 +11,10 @@ from utils.mil_utils import combine_pseudo_labels_with_instance_labels, get_data
 from utils.save_utils import save_dataframe_with_output, save_confusion_matrices
 from metrics import MetricCalculator
 class MILModel:
-    def __init__(self, config, num_classes, n_training_points):
+    def __init__(self, config, n_training_points):
         self.n_training_points = n_training_points
         self.batch_size = config["model"]["batch_size"]
-        self.num_classes = num_classes
+        self.num_classes = config["data"]["num_classes"]
         self.config = config
         self.model = create_model(config, self.num_classes, n_training_points)
         if config["model"]["load_model"] != 'None':
@@ -25,7 +25,8 @@ class MILModel:
         print(self.model.layers[1].summary())
 
     def train(self, data_gen):
-        mlflow_callback = MLFlowCallback(self.config)
+        metric_calculator = MetricCalculator(self.model, data_gen, self.config, mode='val')
+        mlflow_callback = MLFlowCallback(self.config, metric_calculator)
         callbacks = [mlflow_callback]
 
         train_generator_weak_aug = data_gen.train_generator_weak_aug
@@ -38,7 +39,6 @@ class MILModel:
 
         num_pseudo_labels = self.config['data']['positive_pseudo_instance_labels_per_bag']
         label_weights = self.config['data']['label_weights']
-        metric_calculator = MetricCalculator(self.model, data_gen, self.config, mode='val')
 
         for epoch in range(self.config["model"]["epochs"]):
             print('Make predictions to produce pseudo labels..')
@@ -58,8 +58,6 @@ class MILModel:
                 steps_per_epoch=steps_all,
                 callbacks=[callbacks],
             )
-            metrics, _ = metric_calculator.calc_metrics()
-            mlflow_callback.customized_logging_on_epoch_end(epoch, metrics)
 
     def test(self, data_gen):
         metric_calculator = MetricCalculator(self.model, data_gen, self.config, mode='test')
