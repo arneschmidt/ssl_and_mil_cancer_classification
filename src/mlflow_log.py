@@ -60,7 +60,7 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
             self.best_result = metrics_dict[metrics_for_model_saving]
             if self.config["model"]["save_model"]:
                 self._save_model()
-            mlflow.log_metric("best" + metrics_for_model_saving, metrics_dict[metrics_for_model_saving])
+            mlflow.log_metric("best_" + metrics_for_model_saving, metrics_dict[metrics_for_model_saving])
             mlflow.log_metric("saved_model_epoch", self.finished_epochs)
         else:
             self.new_best_result = False
