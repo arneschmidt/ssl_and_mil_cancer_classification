@@ -16,13 +16,13 @@ def main(config):
     logger.config_logging()
 
     print("Create data generators..")
-    data_gen = DataGenerator(config["data"], config["model"]["batch_size"], config['model']['mode'])
+    data_gen = DataGenerator(config)
 
     print("Load classification model")
     if config['data']['supervision'] == 'full':
-        model = SupervisedModel(config, data_gen.num_classes, data_gen.num_training_samples)
+        model = SupervisedModel(config, data_gen.num_training_samples)
     else:
-        model = MILModel(config, data_gen.num_classes, data_gen.num_training_samples)
+        model = MILModel(config, data_gen.num_training_samples)
 
     if config["model"]["mode"] == "train":
         print("Train")

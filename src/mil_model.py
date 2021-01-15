@@ -9,13 +9,12 @@ from sklearn.utils import class_weight
 from utils.mil_utils import combine_pseudo_labels_with_instance_labels, get_data_generator_with_targets, \
     get_data_generator_without_targets
 from utils.save_utils import save_dataframe_with_output, save_confusion_matrices
-from utils.wsi_gleason_validation_utils import get_wsi_gleason_metrics
-
+from metrics import MetricCalculator
 class MILModel:
-    def __init__(self, config, num_classes, n_training_points):
+    def __init__(self, config, n_training_points):
         self.n_training_points = n_training_points
         self.batch_size = config["model"]["batch_size"]
-        self.num_classes = num_classes
+        self.num_classes = config["data"]["num_classes"]
         self.config = config
         self.model = create_model(config, self.num_classes, n_training_points)
         if config["model"]["load_model"] != 'None':
@@ -26,7 +25,8 @@ class MILModel:
         print(self.model.layers[1].summary())
 
     def train(self, data_gen):
-        mlflow_callback = MLFlowCallback(self.config)
+        metric_calculator = MetricCalculator(self.model, data_gen, self.config, mode='val')
+        mlflow_callback = MLFlowCallback(self.config, metric_calculator)
         callbacks = [mlflow_callback]
 
         train_generator_weak_aug = data_gen.train_generator_weak_aug
@@ -57,30 +57,12 @@ class MILModel:
                 initial_epoch=epoch,
                 steps_per_epoch=steps_all,
                 callbacks=[callbacks],
-                validation_data=data_gen.validation_generator
             )
-            if self.config["data"]["wsi_gleason_score_validation"] and epoch%5 == 0:
-                metrics_dict, _ = get_wsi_gleason_metrics(self.model, data_gen.validation_generator, data_gen.val_df,
-                                                          data_gen.wsi_df, self.batch_size,
-                                                          self.config['model']['confidence_threshold'],
-                                                          self.config['model']['num_patch_threshold'])
-                mlflow_callback.log_wsi_results(metrics_dict)
 
     def test(self, data_gen):
-        metrics = self.model.evaluate(
-            data_gen.test_generator,
-            steps=data_gen.test_generator.n / self.batch_size,
-            return_dict=True
-        )
-        metrics = format_metrics_for_mlflow(metrics)
-        if self.config["data"]["wsi_gleason_score_validation"]:
-            wsi_metrics, confusion_matrices = get_wsi_gleason_metrics(self.model, data_gen.test_generator_with_unlabeled,
-                                                                      data_gen.test_df_with_unlabeled, data_gen.wsi_df,
-                                                                      self.batch_size,
-                                                                      self.config['model']['confidence_threshold'],
-                                                                      self.config['model']['num_patch_threshold'])
-            metrics.update(wsi_metrics)
-            save_confusion_matrices(confusion_matrices, self.config['output_dir'])
+        metric_calculator = MetricCalculator(self.model, data_gen, self.config, mode='test')
+        metrics, confusion_matrices = metric_calculator.calc_metrics()
+        save_confusion_matrices(confusion_matrices, self.config['output_dir'])
         return metrics
 
     def predict(self, data_gen):

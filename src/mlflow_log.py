@@ -3,7 +3,6 @@ import mlflow
 import tensorflow
 import os
 import numpy as np
-from utils.wsi_gleason_validation_utils import get_wsi_gleason_metrics
 
 class MLFlowLogger:
     def __init__(self, config: Dict):
@@ -25,19 +24,19 @@ class MLFlowLogger:
 
     def test_logging(self, metrics: Dict):
         mlflow.log_metrics(metrics)
-        print(metrics)
 
     def log_artifacts(self):
         mlflow.log_artifacts(self.config['output_dir'])
 
 
 class MLFlowCallback(tensorflow.keras.callbacks.Callback):
-    def __init__(self, config):
+    def __init__(self, config, metric_calculator):
         super().__init__()
         self.finished_epochs = 0
         self.best_result = 0.0
         self.new_best_result = False
         self.config = config
+        self.metric_calculator = metric_calculator
 
     def on_batch_end(self, batch: int, logs=None):
         if batch % 100 == 0:
@@ -46,27 +45,25 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
             mlflow.log_metrics(metrics_dict, step=current_step)
 
     def on_epoch_end(self, epoch: int, logs=None):
+        metrics_dict, _ = self.metric_calculator.calc_metrics()
         self.finished_epochs = epoch + 1
         current_step = int(self.finished_epochs * self.params['steps'])
 
-        metrics_dict = format_metrics_for_mlflow(logs.copy())
         mlflow.log_metrics(metrics_dict, step=current_step)
         mlflow.log_metric('finished_epochs', self.finished_epochs, step=current_step)
 
         # Check if new best model
-        if metrics_dict["val_f1_mean"] > self.best_result:
+        metrics_for_model_saving = self.config['model']['metrics_for_model_saving']
+        if metrics_dict[metrics_for_model_saving] > self.best_result:
             self.new_best_result = True
             print("\n New best model! Saving model..")
-            self.best_result = metrics_dict["val_f1_mean"]
+            self.best_result = metrics_dict[metrics_for_model_saving]
             if self.config["model"]["save_model"]:
                 self._save_model()
-            mlflow.log_metric("best_val_f1_mean", metrics_dict["val_f1_mean"])
+            mlflow.log_metric("best_" + metrics_for_model_saving, metrics_dict[metrics_for_model_saving])
             mlflow.log_metric("saved_model_epoch", self.finished_epochs)
         else:
             self.new_best_result = False
-
-    def log_wsi_results(self, metrics_dict):
-        mlflow.log_metrics(metrics_dict, step=int(self.finished_epochs * self.params['steps']))
 
     def _save_model(self):
         save_dir = os.path.join(self.config["output_dir"], "models")

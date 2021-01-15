@@ -7,13 +7,14 @@ import numpy as np
 from mlflow_log import MLFlowCallback
 from model_architecture import create_model
 from sklearn.utils import class_weight
+from metrics import MetricCalculator
 
 
 class SupervisedModel:
-    def __init__(self, config, num_classes, n_training_points):
+    def __init__(self, config, n_training_points):
         self.n_training_points = n_training_points
         self.batch_size = config["model"]["batch_size"]
-        self.num_classes = num_classes
+        self.num_classes = config["data"]["num_classes"]
         self.config = config
         self.model = create_model(config, self.num_classes, n_training_points)
         if config["model"]["load_model"]:
@@ -25,9 +26,9 @@ class SupervisedModel:
     def train(self, data_gen):
         train_data_generator = data_gen.train_generator
         val_data_generator = data_gen.validation_generator
-
-        callbacks = [MLFlowCallback(self.config)]
-        callbacks = []
+        metric_calculator = MetricCalculator(self.model, data_gen, self.config, mode='val')
+        mlflow_callback = MLFlowCallback(self.config, metric_calculator)
+        callbacks = [mlflow_callback]
 
         if self.config["model"]["class_weighted_loss"] and self.config['model']['use_fixed_class_weights'] is False:
             class_weights_array = class_weight.compute_class_weight(

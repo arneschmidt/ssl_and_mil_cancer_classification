@@ -6,18 +6,19 @@ from utils.data_utils import extract_df_info
 
 # TODO: add multiple instance learning setting
 class DataGenerator():
-    def __init__(self, data_config, batch_size, mode):
-        self.data_config = data_config
-        self.num_classes = data_config['num_classes']
-        self.batch_size = batch_size
-        self.mode = mode
+    def __init__(self, config):
+        self.data_config = config["data"]
+        self.model_config = config["model"]
         self.train_df = None
         self.val_df = None
         self.test_df = None
         self.wsi_df = None
-        self._create_data_generators(mode, data_config)
+        self.num_training_samples = 0
+        self._create_data_generators()
 
-    def _create_data_generators(self, mode, data_config):
+    def _create_data_generators(self):
+        mode = self.model_config["mode"]
+        data_config = self.data_config
         if mode == 'train' or mode == 'predict_features' or mode == 'predict':
             self.load_dataframes(split='train')
             if data_config['supervision'] == 'mil':
@@ -29,12 +30,11 @@ class DataGenerator():
             else:
                 self.train_generator = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong', shuffle=True)
                 self.num_training_samples = self.train_generator.n
-            self.validation_generator = self.data_generator_from_dataframe(self.val_df)
+            self.validation_generator = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
         elif mode =='test':
             self.load_dataframes(split='test')
-            self.test_generator = self.data_generator_from_dataframe(self.test_df)
-            if data_config["wsi_gleason_score_validation"]:
-                self.test_generator_with_unlabeled = self.data_generator_from_dataframe(self.test_df_with_unlabeled, target_mode='raw')
+            self.validation_generator = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
+            self.test_generator = self.data_generator_from_dataframe(self.test_df, target_mode='raw')
             self.num_training_samples = self.test_generator.n # just formally necessary for model initialization
         else:
             raise Exception('Choose valid model mode')
@@ -63,7 +63,7 @@ class DataGenerator():
         if target_mode == 'class':
             y_col = 'class'
             class_mode = 'categorical'
-            classes = [str(i) for i in range(self.num_classes)]
+            classes = [str(i) for i in range(self.data_config["num_classes"])]
         elif target_mode == 'index':
             y_col = 'index'
             class_mode = 'raw'
@@ -81,7 +81,7 @@ class DataGenerator():
             x_col="image_path",
             y_col=y_col,
             target_size=self.data_config["image_target_size"],
-            batch_size=self.batch_size,
+            batch_size=self.model_config["batch_size"],
             shuffle=shuffle,
             classes=classes,
             class_mode=class_mode,
@@ -113,9 +113,10 @@ class DataGenerator():
                 val_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Test.xlsx"))
                 self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
             elif split == 'test':
+                val_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Test.xlsx"))
+                self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
                 test_df_raw = pd.read_excel(os.path.join(self.data_config["data_split_dir"], "Test.xlsx"))
-                self.test_df_with_unlabeled = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
-                self.test_df = self.test_df_with_unlabeled[self.test_df_with_unlabeled["class"].str.match('4') == False].reset_index(inplace=False)
+                self.test_df = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
         elif self.data_config["dataset_name"] == "panda":
             wsi_df = pd.read_csv(os.path.join(self.data_config["dir"], "wsi_labels.csv"))
             wsi_df['Gleason_primary'] = wsi_df['gleason_score'].str.split('+').str[0].astype(int)
@@ -129,9 +130,10 @@ class DataGenerator():
                 val_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val_patches.csv"))
                 self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
             elif split == 'test':
+                val_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val_patches.csv"))
+                self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
                 test_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "test_patches.csv"))
-                self.test_df_with_unlabeled = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
-                self.test_df = self.test_df_with_unlabeled[self.test_df_with_unlabeled["class"].str.match('4') == False].reset_index(inplace=False)
+                self.test_df = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
         else:
             raise Exception("Please choose valid dataset name!")
 

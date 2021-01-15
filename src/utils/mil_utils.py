@@ -72,12 +72,12 @@ def _calculate_sample_weights(gt_labels, pseudo_labels, label_weights, unlabeled
     soft_label_weight_array = np.full(number_targets, fill_value=label_weights['soft_labels'])
     negative_gt_labels_weight_array = np.full(number_targets, fill_value=label_weights['negative_gt_labels'])
 
-    sample_weights = np.full(number_targets, fill_value=0)
+    sample_weights = np.full(number_targets, fill_value=-1)
     sample_weights = np.where(gt_labels == 0, negative_gt_labels_weight_array, sample_weights)
     sample_weights = np.where(np.logical_and(pseudo_labels != unlabeled_index, gt_labels != 0), pseudo_labels_weight_array, sample_weights)
     sample_weights = np.where(np.logical_and((gt_labels != 0), (gt_labels != unlabeled_index)), positive_gt_labels_weight_array, sample_weights)
     sample_weights = np.where(np.logical_and(pseudo_labels == unlabeled_index, gt_labels == unlabeled_index), soft_label_weight_array, sample_weights)
-    assert np.all(sample_weights != 0)
+    assert np.all(sample_weights != -1)
 
     return sample_weights
 
