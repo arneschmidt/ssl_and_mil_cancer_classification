@@ -2,9 +2,9 @@ data:
   dataset_name: camelyon16
 #  dir: /home/arne/datasets/Camelyon16_dummy3/patches/
 #  data_split_dir: /home/arne/datasets/Camelyon16_dummy3/patches/
-  dir: /work/Camelyon_MIL/
-  data_split_dir: /work/Camelyon_MIL/
-  artifact_dir: ./dataset_dependent/panda/
+  dir: /work/Camelyon16_MIL/
+  data_split_dir: /work/Camelyon16_MIL/
+  artifact_dir: ./dataset_dependent/camelyon16/
   image_target_size: [250, 250]
   num_classes: 2
   dataset_type: cancer_binary
