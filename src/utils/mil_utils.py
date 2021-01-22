@@ -20,11 +20,14 @@ def get_pseudo_labels(predictions, train_df, unlabeled_index, number_of_pseudo_l
     while True:
         # select
         wsi_name = train_df['wsi'].iloc[row]
-        wsi_labels = [train_df['wsi_primary_label'][row], train_df['wsi_secondary_label'][row]]
         wsi_df = train_df[train_df['wsi']==wsi_name]
+        if 'wsi_primary_label' in wsi_df:
+            wsi_labels = [train_df['wsi_primary_label'][row], train_df['wsi_secondary_label'][row]]
+        else:
+            wsi_labels = [train_df['wsi_label'][row]]
         end_row_wsi = row + len(wsi_df)
 
-        if train_df['wsi_contains_unlabeled'].iloc[row]: # means: positive bag
+        if train_df['wsi_contains_unlabeled'].iloc[row]:
             for wsi_label in wsi_labels:
                 sorted_indices_low_to_high = np.argsort(predictions[row:end_row_wsi,wsi_label], axis=0)
                 top_indices = sorted_indices_low_to_high[::-1][:number_of_pseudo_labels_per_class]

@@ -21,9 +21,11 @@ def calc_wsi_prostate_cancer_metrics(wsi_predict_dataframe, wsi_gt_dataframe):
     confusion_matrices['wsi_isup_confusion_matrix'] = confusion_matrix(wsi_gt_dataframe['isup_grade'],
                                                                        wsi_predict_dataframe['isup_grade'],
                                                                        labels=[0, 1, 2, 3, 4, 5])
+    artifacts = {}
+    artifacts['confusion_matrics'] = confusion_matrices
 
     value_to_be_optimized = (metrics_dict['wsi_gs_cohens_quadratic_kappa'] + metrics_dict['wsi_isup_cohens_quadratic_kappa'])/2
-    return metrics_dict, confusion_matrices, value_to_be_optimized
+    return metrics_dict, artifacts, value_to_be_optimized
 
 
 def get_gleason_score_and_isup_grade(wsi_df):

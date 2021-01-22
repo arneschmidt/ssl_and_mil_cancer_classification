@@ -8,8 +8,10 @@ from model_architecture import create_model
 from sklearn.utils import class_weight
 from utils.mil_utils import combine_pseudo_labels_with_instance_labels, get_data_generator_with_targets, \
     get_data_generator_without_targets
-from utils.save_utils import save_dataframe_with_output, save_confusion_matrices
+from utils.save_utils import save_dataframe_with_output, save_metrics_artifacts
 from metrics import MetricCalculator
+
+
 class MILModel:
     def __init__(self, config, n_training_points):
         self.n_training_points = n_training_points
@@ -61,8 +63,8 @@ class MILModel:
 
     def test(self, data_gen):
         metric_calculator = MetricCalculator(self.model, data_gen, self.config, mode='test')
-        metrics, confusion_matrices = metric_calculator.calc_metrics()
-        save_confusion_matrices(confusion_matrices, self.config['output_dir'])
+        metrics, artifacts = metric_calculator.calc_metrics()
+        save_metrics_artifacts(artifacts, self.config['output_dir'])
         return metrics
 
     def predict(self, data_gen):
@@ -116,10 +118,11 @@ class MILModel:
         self.model.compile(optimizer=optimizer,
                            loss=loss,
                            metrics=['accuracy',
-                                    # tf.keras.metrics.Precision(),
-                                    # tf.keras.metrics.Recall(),
-                                    tfa.metrics.F1Score(num_classes=self.num_classes),
-                                    tfa.metrics.CohenKappa(num_classes=self.num_classes, weightage='quadratic')])
+                                    tf.keras.metrics.Precision(),
+                                    tf.keras.metrics.Recall(),
+                                    # tfa.metrics.F1Score(num_classes=self.num_classes),
+                                    # tfa.metrics.CohenKappa(num_classes=self.num_classes, weightage='quadratic')
+                                    ])
 
     def _load_combined_model(self, artifact_path: str = "./models/"):
         model_path = os.path.join(artifact_path, "models")

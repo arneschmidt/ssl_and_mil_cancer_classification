@@ -104,6 +104,22 @@ class DataGenerator():
                 test_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "test.txt"))
                 test_df["class"] = test_df["image_path"].str.extract("class(\d+)").astype(str)
                 self.test_df = test_df
+        elif self.data_config["dataset_name"] == "camelyon16":
+            wsi_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "wsi_labels.csv"))
+            wsi_df['class'] = wsi_df['P'].astype(int)
+            wsi_df.rename(columns={"slide": "slide_id"}, inplace=True)
+            self.wsi_df = wsi_df
+            if split == 'train':
+                train_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "train.csv"))
+                self.train_df = extract_df_info(train_df_raw, self.wsi_df, self.data_config, split='train')
+                self.train_df_weak_aug = self.train_df[self.train_df['wsi_contains_unlabeled']]
+                val_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val.csv"))
+                self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
+            elif split == 'test':
+                val_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val.csv"))
+                self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
+                test_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "test.csv"))
+                self.test_df = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
         elif self.data_config["dataset_name"] == "sicapv2":
             self.wsi_df = pd.read_excel(os.path.join(self.data_config["dir"], "wsi_labels.xlsx"))
             if split == 'train':
