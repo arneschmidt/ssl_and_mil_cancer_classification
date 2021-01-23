@@ -28,8 +28,11 @@ class DataGenerator():
                                                                                    shuffle=False, target_mode='None')
                 self.num_training_samples = self.train_generator_weak_aug.n
             else:
-                self.train_generator = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong', shuffle=True)
-                self.num_training_samples = self.train_generator.n
+                self.train_df = self.train_df[self.train_df['class'] != self.data_config['num_classes']]
+                self.train_generator_strong_aug = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong',
+                                                                                     shuffle=True, target_mode='index')
+                self.train_generator_weak_aug = self.train_generator_strong_aug
+                self.num_training_samples = self.train_generator_strong_aug.n
             self.validation_generator = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
         elif mode =='test':
             self.load_dataframes(split='test')
@@ -160,13 +163,16 @@ class DataGenerator():
         out_dict = {}
         out_dict['number_of_wsis'] = len(wsi_names)
         out_dict['number_of_patches'] = len(train_df)
-        if self.data_config["dataset_name"] == "sicapv2" or self.data_config["dataset_name"] == "panda":
+        if self.data_config["dataset_name"] == "prostate_cancer":
             out_dict['number_of_negative_patch_labels'] = np.sum(train_df['class'] == '0')
             out_dict['number_of_positive_patch_labels'] = np.sum(train_df['class'] == '1')\
                                                           + np.sum(train_df['class'] == '2') \
                                                           + np.sum(train_df['class'] == '3')
             out_dict['number_of_unlabeled_patches'] = np.sum(train_df['class'] == '4')
-
+        else:
+            out_dict['number_of_negative_patch_labels'] = np.sum(train_df['class'] == '0')
+            out_dict['number_of_positive_patch_labels'] = np.sum(train_df['class'] == '1')
+            out_dict['number_of_unlabeled_patches'] = np.sum(train_df['class'] == '2')
 
         return out_dict
 
