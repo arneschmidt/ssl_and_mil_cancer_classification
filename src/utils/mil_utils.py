@@ -1,5 +1,12 @@
 import numpy as np
 
+def get_one_hot_training_targets(train_df, label_weights, num_classes):
+    gt_labels = np.array(train_df['class'], dtype=int)
+    sample_weights = _calculate_sample_weights(gt_labels = gt_labels, pseudo_labels=np.zeros_like(gt_labels),
+                              label_weights=label_weights, unlabeled_index=num_classes)
+    gt_labels_one_hot = get_one_hot(gt_labels, num_classes)
+
+    return gt_labels_one_hot, sample_weights
 
 def combine_pseudo_labels_with_instance_labels(predictions, prediction_indices,
                                                train_df, number_of_pseudo_labels_per_class, label_weights):

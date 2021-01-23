@@ -5,7 +5,6 @@ import yaml
 import tensorflow as tf
 from typing import Dict, Optional, Tuple
 from data import DataGenerator
-from supervised_model import SupervisedModel
 from mil_model import MILModel
 from mlflow_log import MLFlowLogger
 
@@ -19,10 +18,7 @@ def main(config):
     data_gen = DataGenerator(config)
 
     print("Load classification model")
-    if config['data']['supervision'] == 'full':
-        model = SupervisedModel(config, data_gen.num_training_samples)
-    else:
-        model = MILModel(config, data_gen.num_training_samples)
+    model = MILModel(config, data_gen.num_training_samples)
 
     if config["model"]["mode"] == "train":
         print("Train")

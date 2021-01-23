@@ -7,7 +7,7 @@ from mlflow_log import MLFlowCallback, format_metrics_for_mlflow
 from model_architecture import create_model
 from sklearn.utils import class_weight
 from utils.mil_utils import combine_pseudo_labels_with_instance_labels, get_data_generator_with_targets, \
-    get_data_generator_without_targets
+    get_data_generator_without_targets, get_one_hot_training_targets
 from utils.save_utils import save_dataframe_with_output, save_metrics_artifacts
 from metrics import MetricCalculator
 
@@ -43,10 +43,14 @@ class MILModel:
         label_weights = self.config['data']['label_weights']
 
         for epoch in range(self.config["model"]["epochs"]):
-            print('Make predictions to produce pseudo labels..')
-            predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps_positive_bags_only, verbose=1)
-            training_targets, sample_weights = combine_pseudo_labels_with_instance_labels(predictions, predictions_indices,
-                                                                                          data_gen.train_df, num_pseudo_labels, label_weights)
+            if self.config['data']['supervision'] == 'mil':
+                print('Make predictions to produce pseudo labels..')
+                predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps_positive_bags_only, verbose=1)
+                training_targets, sample_weights = combine_pseudo_labels_with_instance_labels(predictions, predictions_indices,
+                                                                                              data_gen.train_df, num_pseudo_labels, label_weights)
+            else:
+                training_targets, sample_weights = get_one_hot_training_targets(data_gen.train_df, label_weights,
+                                                                                self.num_classes)
 
             if self.config["model"]["class_weighted_loss"]:
                 class_weights = self._calculate_class_weights(training_targets)

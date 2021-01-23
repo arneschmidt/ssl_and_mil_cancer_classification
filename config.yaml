@@ -5,7 +5,7 @@ model:
   epochs: 20
   learning_rate: 0.01
   optimizer: sgd
-  class_weighted_loss: False
+  class_weighted_loss: True
   loss_function: categorical_crossentropy # "categorical_crossentropy", "focal_loss"
   metrics_patch_level: True
   metrics_wsi_level: True
@@ -30,7 +30,7 @@ model:
 
 data:
   dataset_config: ./dataset_dependent/sicapv2/config.yaml
-  supervision: mil # 'full', 'mil'
+  supervision: mil # 'supervised', 'mil'
   positive_instance_labels_per_bag: all
   positive_pseudo_instance_labels_per_bag: 0
   strong_augment_brightness_range: [0.5, 1.5]
