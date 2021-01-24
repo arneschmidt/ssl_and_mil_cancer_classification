@@ -89,6 +89,9 @@ class MetricCalculator():
         wsi_dataframe = self.data_gen.wsi_df
         wsi_predict_dataframe = self.get_predictions_per_wsi(predictions, gt_df, confidence_threshold)
         wsi_gt_dataframe = wsi_dataframe[wsi_dataframe['slide_id'].isin(wsi_predict_dataframe['slide_id'])]
+        wsi_predict_dataframe, wsi_gt_dataframe = self.sort_dataframes(wsi_predict_dataframe, wsi_gt_dataframe)
+        wsi_gt_dataframe.to_csv('wsi_gt_dataframe.csv')
+        wsi_predict_dataframe.to_csv('wsi_predict_dataframe.csv')
         if self.dataset_type == 'prostate_cancer':
             metrics_dict, artifacts, optimization_value = calc_wsi_prostate_cancer_metrics(wsi_predict_dataframe, wsi_gt_dataframe)
         else:
@@ -112,15 +115,15 @@ class MetricCalculator():
         wsi_names = []
         wsi_primary = []
         wsi_secondary = []
-        num_predictions_per_class = np.zeros(shape=predictions_softmax.shape[0])
-        confidences_per_class = np.zeros(shape=predictions_softmax.shape[0])
+        num_predictions_per_class = np.zeros(shape=predictions_softmax.shape[1])
+        confidences_per_class = np.zeros(shape=predictions_softmax.shape[1])
 
         row = 0
         while True:
             wsi_name = patch_dataframe['wsi'][row]
             wsi_df = patch_dataframe[patch_dataframe['wsi'] == wsi_name]
             end_row_wsi = row + len(wsi_df)
-            for class_id in range(len(num_predictions_per_class)):
+            for class_id in range(len(num_predictions_per_class))[1:]:
                 predictions_for_wsi = predictions[row:end_row_wsi]
                 confidences_for_wsi = confidences[row:end_row_wsi]
                 class_id_predicted = (predictions_for_wsi == class_id)
@@ -143,17 +146,29 @@ class MetricCalculator():
                 break
             else:
                 row = end_row_wsi
+        assert len(wsi_names) == len(wsi_primary) == len(wsi_secondary)
+
+        wsi_primary = np.array(wsi_primary)
+        wsi_secondary = np.array(wsi_secondary)
 
         wsi_predict_dataframe = pd.DataFrame()
-        wsi_predict_dataframe['slide_id'] = wsi_names
+        wsi_predict_dataframe['slide_id'] = np.array(wsi_names)
         if self.dataset_type == 'prostate_cancer':
             wsi_predict_dataframe['Gleason_primary'] = wsi_primary
             wsi_predict_dataframe['Gleason_secondary'] = wsi_secondary
         else:
             wsi_predict_dataframe['class'] = wsi_primary
             wsi_predict_dataframe['confidence'] = wsi_secondary
+            assert np.all(np.logical_or(wsi_primary == 0, wsi_primary == 1))
+            assert np.all(np.logical_and(wsi_secondary >= 0.0, wsi_secondary <= 1.0))
 
         return wsi_predict_dataframe
+
+    def sort_dataframes(self, wsi_predict_dataframe: pd.DataFrame, wsi_gt_dataframe:  pd.DataFrame):
+        wsi_predict_dataframe = wsi_predict_dataframe.sort_values(by='slide_id', inplace=False)
+        wsi_gt_dataframe = wsi_gt_dataframe.sort_values(by='slide_id', inplace=False)
+        assert len(wsi_predict_dataframe) == len(wsi_gt_dataframe)
+        return wsi_predict_dataframe, wsi_gt_dataframe
 
     def add_prefix(self, dict, prefix):
         new_dict = {}
