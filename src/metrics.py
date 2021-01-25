@@ -128,6 +128,8 @@ class MetricCalculator():
                 confidences_for_wsi = confidences[row:end_row_wsi]
                 class_id_predicted = (predictions_for_wsi == class_id)
                 top_5_confidences = np.sort(confidences_for_wsi[class_id_predicted], axis=0)[::-1][0:5]
+                if top_5_confidences.size == 0:
+                    top_5_confidences = 0.0
                 top_5_conf_average = np.mean(top_5_confidences)
 
                 class_id_predicted_with_confidence = confidences_for_wsi[class_id_predicted] > confidence_threshold

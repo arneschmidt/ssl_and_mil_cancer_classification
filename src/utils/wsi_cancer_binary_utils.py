@@ -26,5 +26,9 @@ def calc_wsi_binary_prediction(num_predictions_per_class, confidences_per_class)
     else:
         class_pred = 0
     confidence = confidences_per_class[1]
-    assert confidence >= 0.0 and confidence <= 1.0
+    if not confidence >= 0.0 and confidence <= 1.0:
+        print('Strange confidence value detected: ' + str(confidence))
+        print('num_predictions_per_class: ' + str(num_predictions_per_class))
+        confidence = 0.0
+
     return class_pred, confidence
