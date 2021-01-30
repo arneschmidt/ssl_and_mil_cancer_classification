@@ -21,10 +21,10 @@ def calc_wsi_cancer_binary_metrics(wsi_predict_dataframe, wsi_gt_dataframe):
     return metrics, artifacts, value_to_be_optimized
 
 def calc_wsi_binary_prediction(num_predictions_per_class, confidences_per_class):
-    if num_predictions_per_class[1] > 5 and confidences_per_class[1] > 0.5:
-        class_pred = 1
-    else:
-        class_pred = 0
+    # if num_predictions_per_class[1] > 5 and confidences_per_class[1] > 0.5:
+    #     class_pred = 1
+    # else:
+    #     class_pred = 0
     confidence = confidences_per_class[1]
     if not confidence >= 0.0 and confidence <= 1.0:
         print('Strange confidence value detected: ' + str(confidence))

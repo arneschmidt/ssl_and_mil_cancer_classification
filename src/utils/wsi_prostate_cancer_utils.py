@@ -52,9 +52,9 @@ def get_gleason_score_and_isup_grade(wsi_df):
 
 def calc_gleason_grade(num_predictions_per_class, confidences_per_class, confidence_threshold):
     # don't count outliers, set count to zero if top confidences are low
-    for i in range(len(num_predictions_per_class)):
-        if confidences_per_class[i] < confidence_threshold:
-            num_predictions_per_class[i] = 0
+    # for i in range(len(num_predictions_per_class)):
+    #     if confidences_per_class[i] < confidence_threshold:
+    #         num_predictions_per_class[i] = 0
     if num_predictions_per_class[1] == num_predictions_per_class[2] == num_predictions_per_class[3] == 0:
         primary = 0
         secondary = 0
