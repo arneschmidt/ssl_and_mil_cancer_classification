@@ -108,7 +108,7 @@ class DataGenerator():
                 test_df["class"] = test_df["image_path"].str.extract("class(\d+)").astype(str)
                 self.test_df = test_df
         elif self.data_config["dataset_name"] == "camelyon16":
-            wsi_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "wsi_labels.csv")).drop_duplicates()
+            wsi_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "wsi_labels.csv")).drop_duplicates().reset_index()
             wsi_df['class'] = wsi_df['P'].astype(int)
             wsi_df.rename(columns={"slide": "slide_id"}, inplace=True)
             self.wsi_df = wsi_df
