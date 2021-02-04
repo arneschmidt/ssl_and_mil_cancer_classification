@@ -28,7 +28,7 @@ class DataGenerator():
                                                                                    shuffle=False, target_mode='None')
                 self.num_training_samples = self.train_generator_weak_aug.n
             else:
-                self.train_df = self.train_df[self.train_df['class'] != self.data_config['num_classes']]
+                self.train_df = self.train_df[self.train_df['class'] != self.data_config['num_classes']].reset_index()
                 self.train_generator_strong_aug = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong',
                                                                                      shuffle=True, target_mode='index')
                 self.train_generator_weak_aug = self.train_generator_strong_aug

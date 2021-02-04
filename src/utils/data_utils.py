@@ -157,7 +157,7 @@ def get_rows_of_visible_instances_cb(dataframe, wsi_dataframe, num_instance_samp
         positive_rows = []
         for instance_df_row in range(len(dataframe["image_path"])):
             if wsi_dataframe['slide_id'][wsi_df_row] == dataframe['wsi'][instance_df_row]:
-                if negative_bag or dataframe['class'][instance_df_row] == '0':
+                if negative_bag:
                     rows_of_visible_instance_labels.append(instance_df_row)
                 elif dataframe['class'][instance_df_row] == '1':
                     positive_rows.append(instance_df_row)
