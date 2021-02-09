@@ -25,7 +25,7 @@ class MetricCalculator():
             self.test_df = data_gen.test_df
 
     def calc_metrics(self):
-        print('Calculate metrics for ' + self.mode)
+        print('\nCalculate metrics for ' + self.mode)
         val_predictions, test_predictions = self.get_predictions()
         metrics = {}
         artifacts = {}
@@ -77,12 +77,9 @@ class MetricCalculator():
         return metrics
 
     def calc_optimal_wsi_metrics(self, val_predictions, test_predictions):
-        if self.dataset_type == 'prostate_cancer':
-            confidence_threshold = self.calc_optimal_confidence_threshold(val_predictions, self.val_df)
-        else:
-            confidence_threshold = 0.0 # not needed
+        confidence_threshold = self.calc_optimal_confidence_threshold(val_predictions, self.val_df)
         metrics_dict, artifacts, _ = self.calc_wsi_metrics(test_predictions, self.test_df, confidence_threshold)
-
+        metrics_dict['confidence_threshold'] = confidence_threshold
         return metrics_dict, artifacts
 
     def calc_wsi_metrics(self, predictions, gt_df, confidence_threshold):
@@ -98,13 +95,14 @@ class MetricCalculator():
         return metrics_dict, artifacts, optimization_value
 
     def calc_optimal_confidence_threshold(self, predictions, gt_dataframe):
-        confidence_thresholds = np.arange(0.3, 1.0, 0.1)
-        optimization_values = np.zeros_like(confidence_thresholds)
+        confidence_thresholds = np.arange(0.3, 1.0, 0.02)
+        best_result = 0.0
+        optimal_threshold = 0.0
         for i in range(len(confidence_thresholds)):
             _, _, opt_value = self.calc_wsi_metrics(predictions, gt_dataframe, confidence_thresholds[i])
-            optimization_values[i] = opt_value
-        id_optimal_value = np.argmax(optimization_values)
-        optimal_threshold = confidence_thresholds[id_optimal_value]
+            if opt_value > best_result:
+                best_result = opt_value
+                optimal_threshold = confidence_thresholds[i]
         return optimal_threshold
 
     def get_predictions_per_wsi(self, predictions_softmax, patch_dataframe, confidence_threshold):
@@ -138,7 +136,7 @@ class MetricCalculator():
             if self.dataset_type == 'prostate_cancer':
                 primary, secondary = calc_gleason_grade(num_predictions_per_class, confidences_per_class, confidence_threshold)
             else: # NOTE: here we use primary=class, secondary=confidence
-                primary, secondary = calc_wsi_binary_prediction(num_predictions_per_class, confidences_per_class)
+                primary, secondary = calc_wsi_binary_prediction(num_predictions_per_class, confidences_per_class, confidence_threshold)
             wsi_names.append(wsi_name)
             wsi_primary.append(primary)
             wsi_secondary.append(secondary)
