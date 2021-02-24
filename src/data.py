@@ -28,8 +28,11 @@ class DataGenerator():
                                                                                    shuffle=False, target_mode='None')
                 self.num_training_samples = self.train_generator_weak_aug.n
             else:
-                self.train_generator = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong', shuffle=True)
-                self.num_training_samples = self.train_generator.n
+                self.train_df = self.train_df[self.train_df['class'] != self.data_config['num_classes']].reset_index()
+                self.train_generator_strong_aug = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong',
+                                                                                     shuffle=True, target_mode='index')
+                self.train_generator_weak_aug = self.train_generator_strong_aug
+                self.num_training_samples = self.train_generator_strong_aug.n
             self.validation_generator = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
         elif mode =='test':
             self.load_dataframes(split='test')
@@ -104,6 +107,22 @@ class DataGenerator():
                 test_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "test.txt"))
                 test_df["class"] = test_df["image_path"].str.extract("class(\d+)").astype(str)
                 self.test_df = test_df
+        elif self.data_config["dataset_name"] == "camelyon16":
+            wsi_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "wsi_labels.csv")).drop_duplicates().reset_index()
+            wsi_df['class'] = wsi_df['P'].astype(int)
+            wsi_df.rename(columns={"slide": "slide_id"}, inplace=True)
+            self.wsi_df = wsi_df
+            if split == 'train':
+                train_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "train.csv"))
+                self.train_df = extract_df_info(train_df_raw, self.wsi_df, self.data_config, split='train')
+                self.train_df_weak_aug = self.train_df[self.train_df['wsi_contains_unlabeled']]
+                val_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val.csv"))
+                self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
+            elif split == 'test':
+                val_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val.csv"))
+                self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
+                test_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "test.csv"))
+                self.test_df = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
         elif self.data_config["dataset_name"] == "sicapv2":
             self.wsi_df = pd.read_excel(os.path.join(self.data_config["dir"], "wsi_labels.xlsx"))
             if split == 'train':
@@ -144,13 +163,16 @@ class DataGenerator():
         out_dict = {}
         out_dict['number_of_wsis'] = len(wsi_names)
         out_dict['number_of_patches'] = len(train_df)
-        if self.data_config["dataset_name"] == "sicapv2" or self.data_config["dataset_name"] == "panda":
+        if self.data_config["dataset_name"] == "prostate_cancer":
             out_dict['number_of_negative_patch_labels'] = np.sum(train_df['class'] == '0')
             out_dict['number_of_positive_patch_labels'] = np.sum(train_df['class'] == '1')\
                                                           + np.sum(train_df['class'] == '2') \
                                                           + np.sum(train_df['class'] == '3')
             out_dict['number_of_unlabeled_patches'] = np.sum(train_df['class'] == '4')
-
+        else:
+            out_dict['number_of_negative_patch_labels'] = np.sum(train_df['class'] == '0')
+            out_dict['number_of_positive_patch_labels'] = np.sum(train_df['class'] == '1')
+            out_dict['number_of_unlabeled_patches'] = np.sum(train_df['class'] == '2')
 
         return out_dict
 

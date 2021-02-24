@@ -41,7 +41,8 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
     def on_batch_end(self, batch: int, logs=None):
         if batch % 100 == 0:
             current_step = int((self.finished_epochs * self.params['steps']) + batch)
-            metrics_dict = format_metrics_for_mlflow(logs.copy())
+            # metrics_dict = format_metrics_for_mlflow(logs.copy())
+            metrics_dict = logs.copy()
             mlflow.log_metrics(metrics_dict, step=current_step)
 
     def on_epoch_end(self, epoch: int, logs=None):

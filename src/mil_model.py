@@ -7,9 +7,11 @@ from mlflow_log import MLFlowCallback, format_metrics_for_mlflow
 from model_architecture import create_model
 from sklearn.utils import class_weight
 from utils.mil_utils import combine_pseudo_labels_with_instance_labels, get_data_generator_with_targets, \
-    get_data_generator_without_targets
-from utils.save_utils import save_dataframe_with_output, save_confusion_matrices
+    get_data_generator_without_targets, get_one_hot_training_targets
+from utils.save_utils import save_dataframe_with_output, save_metrics_artifacts
 from metrics import MetricCalculator
+
+
 class MILModel:
     def __init__(self, config, n_training_points):
         self.n_training_points = n_training_points
@@ -41,10 +43,14 @@ class MILModel:
         label_weights = self.config['data']['label_weights']
 
         for epoch in range(self.config["model"]["epochs"]):
-            print('Make predictions to produce pseudo labels..')
-            predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps_positive_bags_only, verbose=1)
-            training_targets, sample_weights = combine_pseudo_labels_with_instance_labels(predictions, predictions_indices,
-                                                                                          data_gen.train_df, num_pseudo_labels, label_weights)
+            if self.config['data']['supervision'] == 'mil':
+                print('Make predictions to produce pseudo labels..')
+                predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps_positive_bags_only, verbose=1)
+                training_targets, sample_weights = combine_pseudo_labels_with_instance_labels(predictions, predictions_indices,
+                                                                                              data_gen.train_df, num_pseudo_labels, label_weights)
+            else:
+                training_targets, sample_weights = get_one_hot_training_targets(data_gen.train_df, label_weights,
+                                                                                self.num_classes)
 
             if self.config["model"]["class_weighted_loss"]:
                 class_weights = self._calculate_class_weights(training_targets)
@@ -61,8 +67,8 @@ class MILModel:
 
     def test(self, data_gen):
         metric_calculator = MetricCalculator(self.model, data_gen, self.config, mode='test')
-        metrics, confusion_matrices = metric_calculator.calc_metrics()
-        save_confusion_matrices(confusion_matrices, self.config['output_dir'])
+        metrics, artifacts = metric_calculator.calc_metrics()
+        save_metrics_artifacts(artifacts, self.config['output_dir'])
         return metrics
 
     def predict(self, data_gen):
@@ -116,10 +122,11 @@ class MILModel:
         self.model.compile(optimizer=optimizer,
                            loss=loss,
                            metrics=['accuracy',
-                                    # tf.keras.metrics.Precision(),
-                                    # tf.keras.metrics.Recall(),
-                                    tfa.metrics.F1Score(num_classes=self.num_classes),
-                                    tfa.metrics.CohenKappa(num_classes=self.num_classes, weightage='quadratic')])
+                                    tf.keras.metrics.Precision(),
+                                    tf.keras.metrics.Recall(),
+                                    # tfa.metrics.F1Score(num_classes=self.num_classes),
+                                    # tfa.metrics.CohenKappa(num_classes=self.num_classes, weightage='quadratic')
+                                    ])
 
     def _load_combined_model(self, artifact_path: str = "./models/"):
         model_path = os.path.join(artifact_path, "models")
