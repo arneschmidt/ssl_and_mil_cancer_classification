@@ -78,15 +78,17 @@ class MetricCalculator():
 
     def calc_optimal_wsi_metrics(self, val_predictions, test_predictions):
         confidence_threshold = self.calc_optimal_confidence_threshold(val_predictions, self.val_df)
-        metrics_dict, artifacts, _ = self.calc_wsi_metrics(test_predictions, self.test_df, confidence_threshold)
+        metrics_dict, artifacts, _ = self.calc_wsi_metrics(test_predictions, self.test_df, confidence_threshold, 'test')
         metrics_dict['confidence_threshold'] = confidence_threshold
         return metrics_dict, artifacts
 
-    def calc_wsi_metrics(self, predictions, gt_df, confidence_threshold):
+    def calc_wsi_metrics(self, predictions, gt_df, confidence_threshold, name):
         wsi_dataframe = self.data_gen.wsi_df
         wsi_predict_dataframe = self.get_predictions_per_wsi(predictions, gt_df, confidence_threshold)
         wsi_gt_dataframe = wsi_dataframe[wsi_dataframe['slide_id'].isin(wsi_predict_dataframe['slide_id'])]
         wsi_predict_dataframe, wsi_gt_dataframe = self.sort_dataframes(wsi_predict_dataframe, wsi_gt_dataframe)
+        wsi_gt_dataframe.to_csv(name + '_wsi_gt_dataframe.csv')
+        wsi_predict_dataframe.to_csv(name + '_wsi_predict_dataframe.csv')
         if self.dataset_type == 'prostate_cancer':
             metrics_dict, artifacts, optimization_value = calc_wsi_prostate_cancer_metrics(wsi_predict_dataframe, wsi_gt_dataframe)
         else:
@@ -99,7 +101,7 @@ class MetricCalculator():
         best_result = 0.0
         optimal_threshold = 0.0
         for i in range(len(confidence_thresholds)):
-            _, _, opt_value = self.calc_wsi_metrics(predictions, gt_dataframe, confidence_thresholds[i])
+            _, _, opt_value = self.calc_wsi_metrics(predictions, gt_dataframe, confidence_thresholds[i], 'val')
             if opt_value > best_result:
                 best_result = opt_value
                 optimal_threshold = confidence_thresholds[i]
@@ -125,8 +127,9 @@ class MetricCalculator():
                 class_id_predicted = (predictions_for_wsi == class_id)
                 top_5_confidences = np.sort(confidences_for_wsi[class_id_predicted], axis=0)[::-1][0:5]
                 if top_5_confidences.size == 0:
-                    top_5_confidences = 0.0
-                top_5_conf_average = np.mean(top_5_confidences)
+                    top_5_conf_average = 0.0
+                else:
+                    top_5_conf_average = top_5_confidences[0] #np.sum(top_5_confidences)/5
 
                 class_id_predicted_with_confidence = confidences_for_wsi[class_id_predicted] > confidence_threshold
                 num_predictions = np.count_nonzero(class_id_predicted_with_confidence)
