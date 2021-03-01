@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_probability as tfp
 import numpy as np
+from typing import Dict
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 from tensorflow.keras.applications.efficientnet import EfficientNetB0, EfficientNetB1, EfficientNetB2, \
     EfficientNetB3, EfficientNetB4, EfficientNetB5, EfficientNetB6, EfficientNetB7
@@ -11,14 +12,26 @@ from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Conv2D, Dropout, MaxPool2D, Flatten, GlobalMaxPool2D, SeparableConv2D
 
 
-def create_model(config, num_classes, num_training_points):
+def create_model(config: Dict, num_classes: int, num_training_points: int):
+    """
+    Initialize classification model consisting of a feature extractor and a classification head.
+    :param config: dict holding config parameters
+    :param num_classes: number of classes
+    :param num_training_points: number of training points
+    :return: keras model
+    """
     feature_extractor = create_feature_extactor(config)
     head = create_head(config, num_classes, num_training_points)
     
     model = Sequential([feature_extractor, head])
     return model
 
-def create_feature_extactor(config):
+def create_feature_extactor(config: Dict):
+    """
+    Create the feature extractor based on pretrained existing keras models.
+    :param config: dict holding the model and data config
+    :return: feature extractor model
+    """
     input_shape = (config["data"]["image_target_size"][0], config["data"]["image_target_size"][1], 3)
     feature_extractor_type = config["model"]["feature_extractor"]["type"]
 
@@ -73,7 +86,14 @@ def create_feature_extactor(config):
     return feature_extractor
 
 
-def create_head(config, num_classes, num_training_points):
+def create_head(config: Dict, num_classes: int, num_training_points: int):
+    """
+    Create classification head on top of the models features.
+    :param config: dict holding the models config
+    :param num_classes: number of classes
+    :param num_training_points: number of trianing points
+    :return: model head (keras model)
+    """
     head_type = config["model"]["head"]["type"]
     mode = config["model"]["mode"]
     if head_type == "deterministic":
@@ -148,6 +168,9 @@ def create_head(config, num_classes, num_training_points):
 
 
 class RBFKernelFn(tf.keras.layers.Layer):
+    """
+    RGF kernel for Gaussian processes.
+    """
     def __init__(self, **kwargs):
         super(RBFKernelFn, self).__init__(**kwargs)
         dtype = kwargs.get('dtype', None)

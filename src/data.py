@@ -3,10 +3,18 @@ import pandas as pd
 import numpy as np
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from utils.data_utils import extract_df_info
+from typing import Dict, Optional, Tuple
 
-# TODO: add multiple instance learning setting
+
 class DataGenerator():
-    def __init__(self, config):
+    """
+    Object to obtain the patches and labels.
+    """
+    def __init__(self, config: Dict):
+        """
+        Initialize data generator object
+        :param config: dict containing config
+        """
         self.data_config = config["data"]
         self.model_config = config["model"]
         self.train_df = None
@@ -17,16 +25,25 @@ class DataGenerator():
         self._create_data_generators()
 
     def _create_data_generators(self):
+        """
+        Create data generators for supervised or semi-supervised multiple instance learning.
+        The number of patch labels specified by 'positive_instance_labels_per_bag' is automatically obtained by
+        randomly masking patch labels.
+
+        :return: Keras image data generator providing the patches and (if available) labels.
+        """
         mode = self.model_config["mode"]
         data_config = self.data_config
         if mode == 'train' or mode == 'predict_features' or mode == 'predict':
             self.load_dataframes(split='train')
+            # Init setting of semi-supervised MIL training
             if data_config['supervision'] == 'mil':
                 self.train_generator_strong_aug = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong',
                                                                                      shuffle=True, target_mode='index')
                 self.train_generator_weak_aug = self.data_generator_from_dataframe(self.train_df_weak_aug, image_augmentation='weak',
                                                                                    shuffle=False, target_mode='None')
                 self.num_training_samples = self.train_generator_weak_aug.n
+            # Init supervised training setting
             else:
                 self.train_df = self.train_df[self.train_df['class'] != self.data_config['num_classes']].reset_index()
                 self.train_generator_strong_aug = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong',
@@ -42,8 +59,17 @@ class DataGenerator():
         else:
             raise Exception('Choose valid model mode')
 
-    def data_generator_from_dataframe(self, dataframe: pd.DataFrame, image_augmentation='None', shuffle=False,
-                                      target_mode='class'):
+    def data_generator_from_dataframe(self, dataframe: pd.DataFrame, image_augmentation: str = 'None',
+                                      shuffle: bool = False, target_mode: str = 'class'):
+        """
+        Wrapper around 'flow_from_dataframe'-method. Uses loaded dataframes to load images and labels.
+
+        :param dataframe: dataframe containing patch paths and labels
+        :param image_augmentation: 'strong','weak' or 'None' indicating the level of augmentation
+        :param shuffle: bool to shuffle the data after each epoch
+        :param target_mode: 'class': loads patch classes, 'index': loads indices instead, or 'None' only loads images
+        :return: data generator loading patches and labels (or indices)
+        """
         if image_augmentation == 'weak':
             datagen = ImageDataGenerator(
                 brightness_range=self.data_config["weak_augment_brightness_range"],
@@ -95,6 +121,11 @@ class DataGenerator():
         return generator
 
     def load_dataframes(self, split):
+        """
+        Load tables containing the patch paths and potentially classes.
+        Loaded dataframes are stored as member variables.
+        :param split: 'train', 'val' or 'test'
+        """
         if self.data_config["dataset_name"] == "breast_hist_images":
             if split == 'train':
                 train_df = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "train.txt"))
@@ -157,6 +188,10 @@ class DataGenerator():
             raise Exception("Please choose valid dataset name!")
 
     def get_train_data_statistics(self):
+        """
+        Calculate the number of labeled patches, classes and WSIs for statistics.
+        :return: dict of statistics
+        """
         train_df = self.train_df
         wsi_df = self.wsi_df
         wsi_names = np.unique(np.array(train_df['wsi']))

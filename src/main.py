@@ -5,12 +5,16 @@ import yaml
 import tensorflow as tf
 from typing import Dict, Optional, Tuple
 from data import DataGenerator
-from mil_model import MILModel
+from model import Model
 from mlflow_log import MLFlowLogger
 
-def main(config):
+
+def main(config: Dict):
+    # Only necessary if certain GPUs are used (like nvidia 2060rtx)
     devices = tf.config.experimental.list_physical_devices('GPU')
     tf.config.experimental.set_memory_growth(devices[0], True)
+
+    # Init logging with mlflow (see README)
     logger = MLFlowLogger(config)
     logger.config_logging()
 
@@ -18,7 +22,7 @@ def main(config):
     data_gen = DataGenerator(config)
 
     print("Load classification model")
-    model = MILModel(config, data_gen.num_training_samples)
+    model = Model(config, data_gen.num_training_samples)
 
     if config["model"]["mode"] == "train":
         print("Train")
@@ -49,6 +53,7 @@ def config_update(orig_dict, new_dict):
             orig_dict[key] = new_dict[key]
     return orig_dict
 
+
 def load_configs(args):
     with open(args.default_config) as file:
         config = yaml.full_load(file)
@@ -63,6 +68,7 @@ def load_configs(args):
         config = config_update(config, exp_config)
 
     return config
+
 
 if __name__ == "__main__":
     print('Load configuration')
