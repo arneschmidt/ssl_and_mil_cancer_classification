@@ -1,5 +1,6 @@
 # Coupling Semi-Supervised and Multiple Instance Learning for Histopathological Image Classification 
-This is the code of the paper Coupling Semi-Supervised and Multiple Instance Learning for Histopathological Image Classification.
+This is the code of the paper Coupling Semi-Supervised and Multiple Instance Learning for Histopathological Image Classification by
+Arne Schmidt, Julio Silva-Rodŕıguez, Rafael Molina, and Valery Naranjo.
 We try our best to make the code reusable and the experiments reproducible by giving a detailed instruction, description of dependencies, configurations and run commands:
 ## Installation and Usage
 To make this code run on your linux machine you need to:
@@ -10,7 +11,9 @@ To make this code run on your linux machine you need to:
 * Download dataset, see dataset_dependent folders READMEs:
     * ./dataset_dependent/camelyon16/README.md
     * ./dataset_dependent/sicapv2/README.md
-* Edit config.yaml to modify settings
+* Edit the configuration:
+    * `./config.yaml` for general settings
+    * `./dataset_dependent/sicapv2/config.yaml` for dataset dependent settings
 * Run the program:
     * `python ./src/main.py`
     
@@ -22,9 +25,9 @@ To make this code run on your linux machine you need to:
     * change the line   `dir: path/to/dataset/`
 3. Run the experiments
     * Navigate into the base folder (cancer_classification)
-    * To run the experiments with efficient labeling (EL), simply use:
+    * To run the experiments with efficient labeling (EL), simply use the command:
     `./dataset_dependent/sicapv2/experiments/efficient_labeling/run.sh`
-    * To run the experiments with complete annotation (CA), simply use:
+    * To run the experiments with complete annotation (CA), simply use the command:
     `./dataset_dependent/sicapv2/experiments/complete_annotation/run.sh`
     * If you want to change/see the configurations, please use the config files in the experiment subfolders, f.e. 
     ./dataset_dependent/sicapv2/experiments/efficient_labeling/P_5/config.yaml
