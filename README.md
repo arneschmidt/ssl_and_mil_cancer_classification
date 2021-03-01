@@ -26,7 +26,7 @@ To make this code run on your linux machine you need to:
     `./dataset_dependent/sicapv2/experiments/efficient_labeling/run.sh`
     * To run the experiments with complete annotation (CA), simply use:
     `./dataset_dependent/sicapv2/experiments/complete_annotation/run.sh`
-    * If you want to change the configurations, please use the config files in the experiment subfolders, f.e. 
+    * If you want to change/see the configurations, please use the config files in the experiment subfolders, f.e. 
     ./dataset_dependent/sicapv2/experiments/efficient_labeling/P_5/config.yaml
 4. To see the output, see below description of logging
 
@@ -40,11 +40,11 @@ To make this code run on your linux machine you need to:
 3. Run the experiments with efficient labeling:
     * Navigate into the base folder (cancer_classification)
     * Run `./dataset_dependent/sicapv2/experiments/efficient_labeling/run.sh` 
-    * If you want to change the configurations, please use the config files in the experiment subfolders, f.e. 
+    * If you want to change/see the configurations, please use the config files in the experiment subfolders, f.e. 
     ./dataset_dependent/camelyon16/experiments/efficient_labeling/P_5/config.yaml
 4. To see the output, see below description of logging
 
-## Logging
+## Experiment Logging
 * Logging is done with mlflow (https://mlflow.org/docs/latest/tracking.html), it is already installed if you followed the installation guidlines above
 * To see the experiment results, navigate into the base folder (cancer_classification). If you ran experiments, a mlruns folder should be present. 
 * Run `mlflow ui`
