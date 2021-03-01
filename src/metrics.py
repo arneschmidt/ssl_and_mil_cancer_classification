@@ -113,8 +113,8 @@ class MetricCalculator():
         wsi_predict_dataframe = self.get_predictions_per_wsi(predictions, gt_df, confidence_threshold)
         wsi_gt_dataframe = wsi_dataframe[wsi_dataframe['slide_id'].isin(wsi_predict_dataframe['slide_id'])]
         wsi_predict_dataframe, wsi_gt_dataframe = self.sort_dataframes(wsi_predict_dataframe, wsi_gt_dataframe)
-        wsi_gt_dataframe.to_csv(name + '_wsi_gt_dataframe.csv')
-        wsi_predict_dataframe.to_csv(name + '_wsi_predict_dataframe.csv')
+        # wsi_gt_dataframe.to_csv(name + '_wsi_gt_dataframe.csv')
+        # wsi_predict_dataframe.to_csv(name + '_wsi_predict_dataframe.csv')
         if self.dataset_type == 'prostate_cancer':
             metrics_dict, artifacts, optimization_value = calc_wsi_prostate_cancer_metrics(wsi_predict_dataframe, wsi_gt_dataframe)
         else:
