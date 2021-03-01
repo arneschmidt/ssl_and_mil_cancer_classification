@@ -198,7 +198,7 @@ class DataGenerator():
         out_dict = {}
         out_dict['number_of_wsis'] = len(wsi_names)
         out_dict['number_of_patches'] = len(train_df)
-        if self.data_config["dataset_name"] == "prostate_cancer":
+        if self.data_config["dataset_type"] == "prostate_cancer":
             out_dict['number_of_negative_patch_labels'] = np.sum(train_df['class'] == '0')
             out_dict['number_of_positive_patch_labels'] = np.sum(train_df['class'] == '1')\
                                                           + np.sum(train_df['class'] == '2') \
