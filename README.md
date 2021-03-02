@@ -25,12 +25,13 @@ To make this code run on your linux machine you need to:
     * change the line   `dir: path/to/dataset/`
 3. Run the experiments
     * Navigate into the base folder (cancer_classification)
-    * To run the experiments with efficient labeling (EL), simply use the command:
-    `./dataset_dependent/sicapv2/experiments/efficient_labeling/run.sh`
-    * To run the experiments with complete annotation (CA), simply use the command:
-    `./dataset_dependent/sicapv2/experiments/complete_annotation/run.sh`
+    * To run the experiments with efficient labeling (EL), simply use the configurations of the subfolders of ./dataset_dependent/sicapv2/experiments/efficient_labeling, f.e.:  
+        * `python src/main.py -dc ./dataset_dependent/sicapv2/experiments/efficient_labeling/P_5/config.yaml`
+    * To run the experiments with complete annotation (CA), simply use the configurations of the subfolders of ./dataset_dependent/sicapv2/experiments/complete_annotation, f.e.:  
+        * `python src/main.py -dc ./dataset_dependent/sicapv2/experiments/complete_annotation/W_5/config.yaml`
     * If you want to change/see the configurations, please use the config files in the experiment subfolders, f.e. 
     ./dataset_dependent/sicapv2/experiments/efficient_labeling/P_5/config.yaml
+    * The subfolders also contain configurations for testing.
 4. To see the output, see below description of logging
 
 ### WSI-level classification of Breast Cancer (Camelyon16)
@@ -42,9 +43,11 @@ To make this code run on your linux machine you need to:
     path of thepreprocessed dataset
 3. Run the experiments with efficient labeling:
     * Navigate into the base folder (cancer_classification)
-    * Run `./dataset_dependent/sicapv2/experiments/efficient_labeling/run.sh` 
+    To run the experiments with efficient labeling (EL), simply use the configurations of the subfolders of ./dataset_dependent/camelyon16/experiments/efficient_labeling, f.e.:  
+        * `python src/main.py -dc ./dataset_dependent/camelyon16/experiments/efficient_labeling/P_5/config.yaml`
     * If you want to change/see the configurations, please use the config files in the experiment subfolders, f.e. 
     ./dataset_dependent/camelyon16/experiments/efficient_labeling/P_5/config.yaml
+    * The subfolders also contain configurations for testing.
 4. To see the output, see below description of logging
 
 ## Experiment Logging
