@@ -24,7 +24,7 @@ cancer classification (on Camelyon16):
 ![Figure 2](./experiment_results/Fig2.png)
 ![Table 1](./experiment_results/Tab1.png)
 
-To reproduce the results, please use the following instructions:
+To run the experiments, please follow this instructions:
 
 ### Patch-level Gleason Grading of Prostate Cancer (SICAPv2)
 1. Follow the steps above to install dependencies and download the dataset
@@ -33,11 +33,11 @@ To reproduce the results, please use the following instructions:
     * change the line   `dir: path/to/dataset/`
 3. Run the experiments
     * Navigate into the base folder (cancer_classification)
-    * To reproduce the test results with the trained models, simply run:
-        * `./dataset_dependent/sicapv2/experiments/reproduce_test_results.sh`
     * To train the model use the configurations of the subfolders of ./dataset_dependent/sicapv2/experiments/ f.e.:  
         * `python src/main.py -dc ./dataset_dependent/sicapv2/experiments/efficient_labeling/P_5/config.yaml`
         * CAUTION: This overrides the existing models!
+    * To test the model use the test configurations test_config.yaml, f.e.:
+        * `python src/main.py -dc ./dataset_dependent/sicapv2/experiments/efficient_labeling/P_5/config.yaml`
 4. To see the output, see below description of logging
 
 ### WSI-level classification of Breast Cancer (Camelyon16)
@@ -49,24 +49,17 @@ To reproduce the results, please use the following instructions:
     path of thepreprocessed dataset
 3. Run the experiments with efficient labeling:
     * Navigate into the base folder (cancer_classification)
-    * To reproduce the test results with the trained models, simply run:
-        * `./dataset_dependent/camelyon16/experiments/reproduce_test_results.sh`
     * To train the model use the configurations of the subfolders of ./dataset_dependent/camelyon16/experiments/ f.e.:  
         * `python src/main.py -dc ./dataset_dependent/camelyon16/experiments/efficient_labeling/P_5/config.yaml`
         * CAUTION: This overrides the existing models!
+    * To test the model use the test configurations test_config.yaml, f.e.:
+        * `python src/main.py -dc ./dataset_dependent/camelyon16/experiments/efficient_labeling/P_5/config.yaml`
 4. To see the output, see below description of logging
 
 ## Trained Models
-The models used for the experiments can be found in the 'models' directories of the experiment subfolders:
-* ./dataset_dependent/sicapv2/experiments/efficient_labeling/
-* ./dataset_dependent/sicapv2/experiments/complete_annotation/
-* ./dataset_dependent/camelyon16/experiments/efficient_labeling/
+The trained keras h5-models of the experiments are all available and can be sent by the authors to reproduce all experiment results.
+They are ~100Mb each and too big to include them in github or the supplementary material.
 
-The path to the P=5 model for the sicapv2 dataset is for example:
-* ./dataset_dependent/sicapv2/experiments/efficient_labeling/models/
-
-They are stored in the keras .h5 model format for the feature extractor (EfficientNetB5) and classification head 
-seperately.
 ## Experiment Logging
 * Logging is done with mlflow (https://mlflow.org/docs/latest/tracking.html), it is already installed if you followed the installation guidlines above
 * To see the experiment results, navigate into the base folder (cancer_classification). If you ran experiments, a mlruns folder should be present. 
