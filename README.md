@@ -33,11 +33,12 @@ To run the experiments, please follow this instructions:
     * change the line   `dir: path/to/dataset/`
 3. Run the experiments
     * Navigate into the base folder (cancer_classification)
-    * To train the model use the configurations of the subfolders of ./dataset_dependent/sicapv2/experiments/ f.e.:  
+    * The subfolders `efficient_labeling` and `complete_annotation` of `./dataset_dependent/sicapv2/experiments/` 
+    contain the configurations of the experiments in Figure 2 of the paper. 
+    * To train the model with efficient labeling (EL) and P=5 use f.e.:  
         * `python src/main.py -dc ./dataset_dependent/sicapv2/experiments/efficient_labeling/P_5/config.yaml`
-        * CAUTION: This overrides the existing models!
     * To test the model use the test configurations test_config.yaml, f.e.:
-        * `python src/main.py -dc ./dataset_dependent/sicapv2/experiments/efficient_labeling/P_5/config.yaml`
+        * `python src/main.py -dc ./dataset_dependent/sicapv2/experiments/efficient_labeling/P_5/test_config.yaml`
 4. To see the output, see below description of logging
 
 ### WSI-level classification of Breast Cancer (Camelyon16)
@@ -51,9 +52,8 @@ To run the experiments, please follow this instructions:
     * Navigate into the base folder (cancer_classification)
     * To train the model use the configurations of the subfolders of ./dataset_dependent/camelyon16/experiments/ f.e.:  
         * `python src/main.py -dc ./dataset_dependent/camelyon16/experiments/efficient_labeling/P_5/config.yaml`
-        * CAUTION: This overrides the existing models!
     * To test the model use the test configurations test_config.yaml, f.e.:
-        * `python src/main.py -dc ./dataset_dependent/camelyon16/experiments/efficient_labeling/P_5/config.yaml`
+        * `python src/main.py -dc ./dataset_dependent/camelyon16/experiments/efficient_labeling/P_5/test_config.yaml`
 4. To see the output, see below description of logging
 
 ## Trained Models
