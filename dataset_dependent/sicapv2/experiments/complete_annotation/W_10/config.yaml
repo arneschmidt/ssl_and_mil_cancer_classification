@@ -31,7 +31,7 @@ model:
 data:
   dataset_config: ./dataset_dependent/sicapv2/config.yaml
   data_split_dir: ./dataset_dependent/sicapv2/dataframes/Validation/Val1_W_10/
-  artifact_dir: ./dataset_dependent/sicapv2/experiments/efficient_labeling/
+  artifact_dir: ./dataset_dependent/sicapv2/experiments/complete_annotation/
   supervision: mil # 'supervised', 'mil'
   positive_instance_labels_per_bag: all
   positive_pseudo_instance_labels_per_bag: 5
