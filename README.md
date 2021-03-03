@@ -56,6 +56,17 @@ To reproduce the results, please use the following instructions:
         * CAUTION: This overrides the existing models!
 4. To see the output, see below description of logging
 
+## Trained Models
+The models used for the experiments can be found in the 'models' directories of the experiment subfolders:
+* ./dataset_dependent/sicapv2/experiments/efficient_labeling/
+* ./dataset_dependent/sicapv2/experiments/complete_annotation/
+* ./dataset_dependent/camelyon16/experiments/efficient_labeling/
+
+The path to the P=5 model for the sicapv2 dataset is for example:
+* ./dataset_dependent/sicapv2/experiments/efficient_labeling/models/
+
+They are stored in the keras .h5 model format for the feature extractor (EfficientNetB5) and classification head 
+seperately.
 ## Experiment Logging
 * Logging is done with mlflow (https://mlflow.org/docs/latest/tracking.html), it is already installed if you followed the installation guidlines above
 * To see the experiment results, navigate into the base folder (cancer_classification). If you ran experiments, a mlruns folder should be present. 
