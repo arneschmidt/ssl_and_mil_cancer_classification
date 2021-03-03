@@ -2,7 +2,7 @@
 This is the code of the paper Coupling Semi-Supervised and Multiple Instance Learning for Histopathological Image Classification by
 Arne Schmidt, Julio Silva-Rodŕıguez, Rafael Molina, and Valery Naranjo.
 We try our best to make the code reusable and the experiments reproducible by giving a detailed instruction, description 
-of dependencies, configurations, run commands and pretrained models:
+of dependencies, configurations and run commands:
 ## Installation and Usage
 To make this code run on your linux machine you need to:
 * Install miniconda (or anaconda): https://docs.anaconda.com/anaconda/install/linux/ 
