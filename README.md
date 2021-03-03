@@ -1,7 +1,8 @@
 # Coupling Semi-Supervised and Multiple Instance Learning for Histopathological Image Classification 
 This is the code of the paper Coupling Semi-Supervised and Multiple Instance Learning for Histopathological Image Classification by
 Arne Schmidt, Julio Silva-Rodŕıguez, Rafael Molina, and Valery Naranjo.
-We try our best to make the code reusable and the experiments reproducible by giving a detailed instruction, description of dependencies, configurations and run commands:
+We try our best to make the code reusable and the experiments reproducible by giving a detailed instruction, description 
+of dependencies, configurations, run commands and pretrained models:
 ## Installation and Usage
 To make this code run on your linux machine you need to:
 * Install miniconda (or anaconda): https://docs.anaconda.com/anaconda/install/linux/ 
@@ -18,6 +19,13 @@ To make this code run on your linux machine you need to:
     * `python ./src/main.py`
     
 ## Reproduce the Experiments of the Paper
+In the paper we show the following experiment results for patch-level Gleason grading (on SICAPv2) and WSI-level breast 
+cancer classification (on Camelyon16):
+![Figure 2](./experiment_results/Fig2.png)
+![Table 1](./experiment_results/Tab1.png)
+
+To reproduce the results, please use the following instructions:
+
 ### Patch-level Gleason Grading of Prostate Cancer (SICAPv2)
 1. Follow the steps above to install dependencies and download the dataset
 2. Configure the path to the SICAPv2 dataset on your Pc:
@@ -25,13 +33,11 @@ To make this code run on your linux machine you need to:
     * change the line   `dir: path/to/dataset/`
 3. Run the experiments
     * Navigate into the base folder (cancer_classification)
-    * To run the experiments with efficient labeling (EL), simply use the configurations of the subfolders of ./dataset_dependent/sicapv2/experiments/efficient_labeling, f.e.:  
+    * To reproduce the test results with the trained models, simply run:
+        * `./dataset_dependent/sicapv2/experiments/reproduce_test_results.sh`
+    * To train the model use the configurations of the subfolders of ./dataset_dependent/sicapv2/experiments/ f.e.:  
         * `python src/main.py -dc ./dataset_dependent/sicapv2/experiments/efficient_labeling/P_5/config.yaml`
-    * To run the experiments with complete annotation (CA), simply use the configurations of the subfolders of ./dataset_dependent/sicapv2/experiments/complete_annotation, f.e.:  
-        * `python src/main.py -dc ./dataset_dependent/sicapv2/experiments/complete_annotation/W_5/config.yaml`
-    * If you want to change/see the configurations, please use the config files in the experiment subfolders, f.e. 
-    ./dataset_dependent/sicapv2/experiments/efficient_labeling/P_5/config.yaml
-    * The subfolders also contain configurations for testing.
+        * CAUTION: This overrides the existing models!
 4. To see the output, see below description of logging
 
 ### WSI-level classification of Breast Cancer (Camelyon16)
@@ -43,11 +49,11 @@ To make this code run on your linux machine you need to:
     path of thepreprocessed dataset
 3. Run the experiments with efficient labeling:
     * Navigate into the base folder (cancer_classification)
-    To run the experiments with efficient labeling (EL), simply use the configurations of the subfolders of ./dataset_dependent/camelyon16/experiments/efficient_labeling, f.e.:  
+    * To reproduce the test results with the trained models, simply run:
+        * `./dataset_dependent/camelyon16/experiments/reproduce_test_results.sh`
+    * To train the model use the configurations of the subfolders of ./dataset_dependent/camelyon16/experiments/ f.e.:  
         * `python src/main.py -dc ./dataset_dependent/camelyon16/experiments/efficient_labeling/P_5/config.yaml`
-    * If you want to change/see the configurations, please use the config files in the experiment subfolders, f.e. 
-    ./dataset_dependent/camelyon16/experiments/efficient_labeling/P_5/config.yaml
-    * The subfolders also contain configurations for testing.
+        * CAUTION: This overrides the existing models!
 4. To see the output, see below description of logging
 
 ## Experiment Logging
