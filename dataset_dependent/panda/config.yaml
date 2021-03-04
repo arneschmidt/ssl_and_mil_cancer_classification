@@ -1,6 +1,6 @@
 data:
   dataset_name: panda
-  dir: /path/to/dataset_dir/
+  dir: /data/BasesDeDatos/Panda/Panda_patches
   artifact_dir: ./dataset_dependent/panda/
   image_target_size: [250, 250]
   num_classes: 4

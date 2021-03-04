@@ -1,6 +1,7 @@
 data:
   dataset_name: sicapv2
-  dir: path/to/dataset/
+  dir: /data/BasesDeDatos/SICAP/SICAPv2_MIL/
+  data_split_dir: /data/BasesDeDatos/SICAP/SICAPv2_MIL/partition_mil/Validation/Val1
   image_target_size: [250, 250]
   num_classes: 4
   dataset_type: prostate_cancer
