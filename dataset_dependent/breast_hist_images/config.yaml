@@ -1,6 +1,6 @@
 data:
   dataset_name: breast_hist_images
-  dir: /home/arne/datasets/breast_hist_images/
+  dir: /path/to/dataset_dir/
   data_split_dir: ./dataset_dependent/breast_hist_images/data_split/
   artifact_dir: ./dataset_dependent/breast_hist_images
   image_target_size: [90 , 90]

@@ -5,6 +5,9 @@ import os
 import numpy as np
 
 class MLFlowLogger:
+    """
+    Object to collect configuration parameters, metrics and artifacts and log them with mlflow.
+    """
     def __init__(self, config: Dict):
         mlflow.set_tracking_uri(config["logging"]["tracking_url"])
         experiment_id = mlflow.set_experiment(experiment_name=config["data"]["dataset_name"])
@@ -30,6 +33,9 @@ class MLFlowLogger:
 
 
 class MLFlowCallback(tensorflow.keras.callbacks.Callback):
+    """
+    Object that is used in the keras training procedure to log metrics at the end of an batch/epoch while training.
+    """
     def __init__(self, config, metric_calculator):
         super().__init__()
         self.finished_epochs = 0
@@ -76,6 +82,9 @@ class MLFlowCallback(tensorflow.keras.callbacks.Callback):
 
 
 def format_metrics_for_mlflow(metrics_dict):
+    """
+    Transform metrics to a format suitable for mlflow.
+    """
     # for now, just format f1 score which comes in as an array
     metrics_name = 'f1_score'
     if 'val_f1_score' in metrics_dict.keys():

@@ -4,7 +4,11 @@ from sklearn.metrics import accuracy_score, cohen_kappa_score, f1_score, confusi
 from utils.wsi_prostate_cancer_utils import calc_wsi_prostate_cancer_metrics, calc_gleason_grade
 from utils.wsi_cancer_binary_utils import calc_wsi_binary_prediction, calc_wsi_cancer_binary_metrics
 
+
 class MetricCalculator():
+    """
+    Object that takes care of the metric calculation for training and testing.
+    """
     def __init__(self, model, data_gen, config, mode):
         self.model = model
         self.data_gen = data_gen
@@ -25,6 +29,10 @@ class MetricCalculator():
             self.test_df = data_gen.test_df
 
     def calc_metrics(self):
+        """
+        Make predictions and calculate metrics.
+        :return: metrics dict, artifacts dict
+        """
         print('\nCalculate metrics for ' + self.mode)
         val_predictions, test_predictions = self.get_predictions()
         metrics = {}
@@ -42,6 +50,10 @@ class MetricCalculator():
         return metrics, artifacts
 
     def get_predictions(self):
+        """
+        Obtain model predictions for validation and/or test data.
+        :return: val_predictions, test_predictions
+        """
         model = self.model
         data_gen = self.data_gen
         batch_size = data_gen.validation_generator.batch_size
@@ -58,7 +70,10 @@ class MetricCalculator():
 
         return val_predictions, test_predictions
 
-    def calc_patch_level_metrics(self, predictions_softmax):
+    def calc_patch_level_metrics(self, predictions_softmax: np.array):
+        """
+        Calculate the metrics for the instance (patch) level.
+        """
         predictions = np.argmax(predictions_softmax, axis=1)
         unlabeled_index = self.num_classes
         gt_classes = self.test_df['class']
@@ -76,19 +91,30 @@ class MetricCalculator():
             metrics[key] = f1_score_classwise[class_id]
         return metrics
 
-    def calc_optimal_wsi_metrics(self, val_predictions, test_predictions):
+    def calc_optimal_wsi_metrics(self, val_predictions: np.array, test_predictions: np.array):
+        """
+        Calculate the WSI metrics for an optimal instance-level confidence threshold.
+        We filter out outliers by disregarding predictions below an optimal threshold to avoid false positive bag
+        predictions.
+        :param val_predictions: 
+        :param test_predictions:
+        :return:
+        """
         confidence_threshold = self.calc_optimal_confidence_threshold(val_predictions, self.val_df)
         metrics_dict, artifacts, _ = self.calc_wsi_metrics(test_predictions, self.test_df, confidence_threshold, 'test')
         metrics_dict['confidence_threshold'] = confidence_threshold
         return metrics_dict, artifacts
 
-    def calc_wsi_metrics(self, predictions, gt_df, confidence_threshold, name):
+    def calc_wsi_metrics(self, predictions: np.array, gt_df, confidence_threshold: float, name: str):
+        """
+        Calculate the metrics for all WSI (bag-level)
+        """
         wsi_dataframe = self.data_gen.wsi_df
         wsi_predict_dataframe = self.get_predictions_per_wsi(predictions, gt_df, confidence_threshold)
         wsi_gt_dataframe = wsi_dataframe[wsi_dataframe['slide_id'].isin(wsi_predict_dataframe['slide_id'])]
         wsi_predict_dataframe, wsi_gt_dataframe = self.sort_dataframes(wsi_predict_dataframe, wsi_gt_dataframe)
-        wsi_gt_dataframe.to_csv(name + '_wsi_gt_dataframe.csv')
-        wsi_predict_dataframe.to_csv(name + '_wsi_predict_dataframe.csv')
+        # wsi_gt_dataframe.to_csv(name + '_wsi_gt_dataframe.csv')
+        # wsi_predict_dataframe.to_csv(name + '_wsi_predict_dataframe.csv')
         if self.dataset_type == 'prostate_cancer':
             metrics_dict, artifacts, optimization_value = calc_wsi_prostate_cancer_metrics(wsi_predict_dataframe, wsi_gt_dataframe)
         else:
@@ -96,7 +122,13 @@ class MetricCalculator():
 
         return metrics_dict, artifacts, optimization_value
 
-    def calc_optimal_confidence_threshold(self, predictions, gt_dataframe):
+    def calc_optimal_confidence_threshold(self, predictions: np.array, gt_dataframe: pd.DataFrame):
+        """
+        Find the optimal threshold based on the validation threshold.
+        :param predictions:
+        :param gt_dataframe:
+        :return:
+        """
         confidence_thresholds = np.arange(0.3, 1.0, 0.02)
         best_result = 0.0
         optimal_threshold = 0.0
@@ -107,7 +139,11 @@ class MetricCalculator():
                 optimal_threshold = confidence_thresholds[i]
         return optimal_threshold
 
-    def get_predictions_per_wsi(self, predictions_softmax, patch_dataframe, confidence_threshold):
+    def get_predictions_per_wsi(self, predictions_softmax: np.array, patch_dataframe: pd.DataFrame,
+                                confidence_threshold: float):
+        """
+        Get the globale predictions per WSI.
+        """
         confidences = np.max(predictions_softmax, axis=1)
         predictions = np.argmax(predictions_softmax, axis=1)
         wsi_names = []
@@ -125,16 +161,20 @@ class MetricCalculator():
                 predictions_for_wsi = predictions[row:end_row_wsi]
                 confidences_for_wsi = confidences[row:end_row_wsi]
                 class_id_predicted = (predictions_for_wsi == class_id)
-                top_5_confidences = np.sort(confidences_for_wsi[class_id_predicted], axis=0)[::-1][0:5]
-                if top_5_confidences.size == 0:
-                    top_5_conf_average = 0.0
+                # top_5_confidences = np.sort(confidences_for_wsi[class_id_predicted], axis=0)[::-1][0:5]
+                # if top_5_confidences.size == 0:
+                #     top_5_conf_average = 0.0
+                # else:
+                #     top_5_conf_average = top_5_confidences[0] #np.sum(top_5_confidences)/5
+                if confidences_for_wsi[class_id_predicted].size == 0:
+                    top_confidence = 0.0
                 else:
-                    top_5_conf_average = top_5_confidences[0] #np.sum(top_5_confidences)/5
+                    top_confidence = np.max(confidences_for_wsi[class_id_predicted], axis=0)
 
                 class_id_predicted_with_confidence = confidences_for_wsi[class_id_predicted] > confidence_threshold
                 num_predictions = np.count_nonzero(class_id_predicted_with_confidence)
                 num_predictions_per_class[class_id] = num_predictions
-                confidences_per_class[class_id] = top_5_conf_average
+                confidences_per_class[class_id] = top_confidence
 
             if self.dataset_type == 'prostate_cancer':
                 primary, secondary = calc_gleason_grade(num_predictions_per_class, confidences_per_class, confidence_threshold)
@@ -165,7 +205,7 @@ class MetricCalculator():
 
         return wsi_predict_dataframe
 
-    def sort_dataframes(self, wsi_predict_dataframe: pd.DataFrame, wsi_gt_dataframe:  pd.DataFrame):
+    def sort_dataframes(self, wsi_predict_dataframe: pd.DataFrame, wsi_gt_dataframe: pd.DataFrame):
         wsi_predict_dataframe = wsi_predict_dataframe.sort_values(by='slide_id', inplace=False)
         wsi_gt_dataframe = wsi_gt_dataframe.sort_values(by='slide_id', inplace=False)
         if not len(wsi_predict_dataframe) == len(wsi_gt_dataframe):

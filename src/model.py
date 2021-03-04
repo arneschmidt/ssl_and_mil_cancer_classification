@@ -10,10 +10,15 @@ from utils.mil_utils import combine_pseudo_labels_with_instance_labels, get_data
     get_data_generator_without_targets, get_one_hot_training_targets
 from utils.save_utils import save_dataframe_with_output, save_metrics_artifacts
 from metrics import MetricCalculator
+from typing import Dict, Optional, Tuple
+from data import DataGenerator
 
 
-class MILModel:
-    def __init__(self, config, n_training_points):
+class Model:
+    """
+    Class that contains the classification model. Wraps keras model.
+    """
+    def __init__(self, config: Dict, n_training_points: int):
         self.n_training_points = n_training_points
         self.batch_size = config["model"]["batch_size"]
         self.num_classes = config["data"]["num_classes"]
@@ -26,11 +31,17 @@ class MILModel:
         print(self.model.layers[0].summary())
         print(self.model.layers[1].summary())
 
-    def train(self, data_gen):
+    def train(self, data_gen: DataGenerator):
+        """
+        Train the model with the parameters specified in the config. Log progress to mlflow (see README)
+        :param data_gen: data generator object to provide the image data generators and dataframes
+        """
+        # initialize callback for training procedure: logging and metrics calculation at the end of each epoch
         metric_calculator = MetricCalculator(self.model, data_gen, self.config, mode='val')
         mlflow_callback = MLFlowCallback(self.config, metric_calculator)
         callbacks = [mlflow_callback]
 
+        # initialize generators with weak and strong augmentation
         train_generator_weak_aug = data_gen.train_generator_weak_aug
         train_generator_strong_aug = data_gen.train_generator_strong_aug
         class_weights = None
@@ -42,19 +53,23 @@ class MILModel:
         num_pseudo_labels = self.config['data']['positive_pseudo_instance_labels_per_bag']
         label_weights = self.config['data']['label_weights']
 
+        # loop for training per epochs
         for epoch in range(self.config["model"]["epochs"]):
+            # Semi-supervised MIL case: make predictions, produce pseudo labels and soft labels
             if self.config['data']['supervision'] == 'mil':
                 print('Make predictions to produce pseudo labels..')
                 predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps_positive_bags_only, verbose=1)
                 training_targets, sample_weights = combine_pseudo_labels_with_instance_labels(predictions, predictions_indices,
                                                                                               data_gen.train_df, num_pseudo_labels, label_weights)
+            # Supervised case: get one hot targets from labels
             else:
                 training_targets, sample_weights = get_one_hot_training_targets(data_gen.train_df, label_weights,
                                                                                 self.num_classes)
-
+            # Optional: class-weighting based on groundtruth and estimated labels
             if self.config["model"]["class_weighted_loss"]:
                 class_weights = self._calculate_class_weights(training_targets)
 
+            # Use gt, pseudo and soft labels to train based on the strongly augmented images
             train_mil_generator = get_data_generator_with_targets(train_generator_strong_aug, training_targets, sample_weights)
             self.model.fit(
                 train_mil_generator,
@@ -65,18 +80,31 @@ class MILModel:
                 callbacks=[callbacks],
             )
 
-    def test(self, data_gen):
+    def test(self, data_gen: DataGenerator):
+        """
+        Test the model with the parameters specified in the config. Log progress to mlflow (see README)
+        :param data_gen: data generator object to provide the image data generators and dataframes
+        :return: dict of metrics from testing
+        """
         metric_calculator = MetricCalculator(self.model, data_gen, self.config, mode='test')
         metrics, artifacts = metric_calculator.calc_metrics()
         save_metrics_artifacts(artifacts, self.config['output_dir'])
         return metrics
 
-    def predict(self, data_gen):
+    def predict(self, data_gen: DataGenerator):
+        """
+        Save predictions of a single random batch for demonstration purposes.
+        :param data_gen:  data generator object to provide the image data generators and dataframes
+        """
         image_batch = data_gen.test_generator.next()
         predictions = self.model.predict(image_batch[0], steps=1)
         self._save_predictions(image_batch, predictions, self.config['output_dir'])
 
-    def predict_features(self, data_gen):
+    def predict_features(self, data_gen: DataGenerator):
+        """
+        Save feature output of model for potential bag-level classifier. Currently not used.
+        :param data_gen:  data generator object to provide the image data generators and dataframes
+        """
         output_dir = self.config['output_dir']
         train_gen = data_gen.train_generator_strong_aug
         train_steps = np.ceil(train_gen.n / train_gen.batch_size)
@@ -91,7 +119,12 @@ class MILModel:
         val_predictions = self.model.predict(val_gen_images, steps=val_steps)
         save_dataframe_with_output(data_gen.val_df, val_predictions, val_features, output_dir, 'Test_features')
 
-    def _calculate_class_weights(self, training_targets):
+    def _calculate_class_weights(self, training_targets: np.array):
+        """
+        Calculate class weights based on gt, pseudo and soft labels.
+        :param training_targets: gt, pseudo and soft labels (fused)
+        :return: class weight dict
+        """
         class_predictions = np.argmax(training_targets, axis=1)
         classes = np.arange(0,self.num_classes)
         class_weights_array = class_weight.compute_class_weight(
@@ -104,6 +137,9 @@ class MILModel:
         return class_weights
 
     def _compile_model(self):
+        """
+        Compile keras model.
+        """
         input_shape = (self.batch_size, self.config["data"]["image_target_size"][0],
                        self.config["data"]["image_target_size"][1], 3)
         self.model.build(input_shape)
@@ -134,7 +170,7 @@ class MILModel:
         self.model.layers[1].load_weights(os.path.join(model_path, "head.h5"))
         self.model.summary()
 
-    def _save_predictions(self, image_batch, predictions, output_dir):
+    def _save_predictions(self, image_batch: np.array, predictions: np.array, output_dir: str):
         for i in range(image_batch[0].shape[0]):
             plt.figure()
             image = image_batch[0][i]
