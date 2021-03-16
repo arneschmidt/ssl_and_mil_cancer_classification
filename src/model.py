@@ -106,18 +106,20 @@ class Model:
         :param data_gen:  data generator object to provide the image data generators and dataframes
         """
         output_dir = self.config['output_dir']
-        train_gen = data_gen.train_generator_strong_aug
-        train_steps = np.ceil(train_gen.n / train_gen.batch_size)
         feature_extractor = self.model.layers[0]
-        train_features = feature_extractor.predict(train_gen, steps=train_steps)
-        train_predictions = self.model.predict(train_gen, steps=train_steps)
-        save_dataframe_with_output(data_gen.train_df, train_predictions, train_features, output_dir, 'Train_features')
+        generators = {'Train': data_gen.train_generator_weak_aug,
+                      'Val': data_gen.validation_generator,
+                      'Test': data_gen.test_generator}
+        dataframes = {'Train': data_gen.train_df,
+                      'Val': data_gen.val_df,
+                      'Test': data_gen.test_df}
+        for mode in generators.keys():
+            generator = generators[mode]
+            train_steps = np.ceil(generator.n / generator.batch_size)
 
-        val_steps = np.ceil(data_gen.validation_generator.n / data_gen.validation_generator.batch_size)
-        val_gen_images = get_data_generator_without_targets(data_gen.validation_generator)
-        val_features = feature_extractor.predict(val_gen_images, steps=val_steps)
-        val_predictions = self.model.predict(val_gen_images, steps=val_steps)
-        save_dataframe_with_output(data_gen.val_df, val_predictions, val_features, output_dir, 'Test_features')
+            train_features = feature_extractor.predict(generator, steps=train_steps)
+            train_predictions = self.model.predict(generator, steps=train_steps)
+            save_dataframe_with_output(dataframes[mode], train_predictions, train_features, output_dir, mode)
 
     def _calculate_class_weights(self, training_targets: np.array):
         """

@@ -1,18 +1,24 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
-def save_dataframe_with_output(dataframe, predictions, features, output_dir, save_name):
-    dataframe['predictions'] = np.argmax(predictions, axis=1)
+def save_dataframe_with_output(dataframe: pd.DataFrame, predictions: np.array, features: np.array, output_dir: str,
+                               save_name: str):
+    out_df = pd.DataFrame()
+    out_df['cnn_prediction'] = np.argmax(predictions, axis=1)
     for feature_id in range(np.shape(features)[1]):
         feature_name = 'feature_' + str(feature_id)
-        dataframe[feature_name] = features[:, feature_id]
-
+        out_df[feature_name] = features[:, feature_id]
+    out_df['instance_name'] = dataframe['image_path']
+    out_df['instance_label'] = dataframe['class']
+    out_df['bag_name'] = dataframe['wsi']
+    out_df['bag_label'] = dataframe['wsi_label']
     output_dir = os.path.join(output_dir, 'feature_predictions')
     os.makedirs(output_dir, exist_ok=True)
-    save_path = output_dir + '/' + save_name + '.xlsx'
+    save_path = output_dir + '/' + save_name + '.csv'
     print('Saving dataframe with output: ' + save_path)
-    dataframe.to_excel(save_path, index=False)
+    out_df.to_csv(save_path, index=False)
 
 def save_metrics_artifacts(artifacts, output_dir):
     if 'confusion_matrices' in artifacts:
