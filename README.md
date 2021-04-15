@@ -54,7 +54,7 @@ To run the experiments, please follow this instructions:
         * `python src/main.py -dc ./dataset_dependent/camelyon16/experiments/efficient_labeling/P_5/config.yaml`
     * To test the model use the test configurations test_config.yaml, f.e.:
         * `python src/main.py -dc ./dataset_dependent/camelyon16/experiments/efficient_labeling/P_5/test_config.yaml`
-4. To see the output, see below description of logging
+4. To see the output, see below description of logging.
 
 ## Trained Models
 The trained keras h5-models of the experiments are all available and can be sent by the authors to reproduce all experiment results.
