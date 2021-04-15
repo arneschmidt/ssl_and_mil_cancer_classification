@@ -136,6 +136,14 @@ def create_head(config: Dict, num_classes: int, num_training_points: int):
         num_inducing_points = config["model"]["head"]["gp"]["inducing_points"]
         features = config["model"]["feature_extractor"]["num_output_features"]
 
+        def mc_sampling(x):
+            samples = x.sample(20)
+            return samples
+
+        def mc_integration(x):
+            out = tf.math.reduce_mean(x, axis=0)
+            return out
+
         if mode == 'test':
             tensor_fn = tfp.distributions.Distribution.mean
         else:
@@ -149,23 +157,46 @@ def create_head(config: Dict, num_classes: int, num_training_points: int):
                 kernel_provider=RBFKernelFn(),
                 event_shape=[num_classes], # output dimensions
                 inducing_index_points_initializer=tf.keras.initializers.RandomUniform(
-                    minval=0.0, maxval=1.0, seed=None
+                    minval=0.3, maxval=0.7, seed=None
                 ),
                 jitter=10e-3,
                 convert_to_tensor_fn=tensor_fn,
+                variational_inducing_observations_scale_initializer=tf.initializers.constant(
+                    0.01 * np.tile(np.eye(num_inducing_points, num_inducing_points), (num_classes, 1, 1))),
+
                 # unconstrained_observation_noise_variance_initializer=(
                 #     tf.constant_initializer(np.array(0.54).astype(np.float32))),
             ),
-            tf.keras.layers.Softmax()
+            tf.keras.layers.Lambda(mc_sampling),
+            tf.keras.layers.Softmax(),
+            tf.keras.layers.Lambda(mc_integration)
         ], name='head')
-        # scaling KL divergence to batch size and dataset size
-        kl_weight = np.array(config["model"]["batch_size"], np.float32) / num_training_points
-        head.add_loss(tf.reduce_mean(kl_weight * head.layers[0].submodules[5].surrogate_posterior_kl_divergence_prior()))
+        head.add_weight(name='num_training_points',
+                        shape=(),
+                        dtype=tf.float32,
+                        initializer=tf.constant_initializer(value=num_training_points),
+                        trainable=False)
+        head.add_loss(kl_loss(head, tf.constant(config["model"]["batch_size"], dtype=tf.float32)))
         head.build()
     else:
         raise Exception("Choose valid model head!")
     return head
 
+def kl_loss(head, batch_size):
+    # tf.print('kl_div: ', kl_div)
+    def _kl_loss():
+        num_training_points = head.variables[7]
+        # kl_weight = tf.cast(0.001 * batch_size / num_training_points, tf.float32)
+        kl_weight = tf.cast(0.01 * batch_size / num_training_points, tf.float32)
+        kl_div = tf.reduce_sum(head.layers[0].submodules[5].surrogate_posterior_kl_divergence_prior())
+
+        loss = tf.multiply(kl_weight, kl_div)
+        # tf.print('kl_weight: ', kl_weight)
+        # tf.print('kl_loss: ', loss)
+        # # tf.print('u_var: ', head.variables[4])
+        return loss
+
+    return _kl_loss
 
 class RBFKernelFn(tf.keras.layers.Layer):
     """
