@@ -176,21 +176,21 @@ def create_head(config: Dict, num_classes: int, num_training_points: int):
                         dtype=tf.float32,
                         initializer=tf.constant_initializer(value=num_training_points),
                         trainable=False)
-        head.add_loss(kl_loss(head, tf.constant(config["model"]["batch_size"], dtype=tf.float32)))
+        head.add_loss(kl_loss(head, config["model"]["batch_size"], config["model"]["head"]["gp"]["kl_weight"]))
         head.build()
     else:
         raise Exception("Choose valid model head!")
     return head
 
-def kl_loss(head, batch_size):
+def kl_loss(head, batch_size, kl_weight):
     # tf.print('kl_div: ', kl_div)
     def _kl_loss():
         num_training_points = head.variables[7]
         # kl_weight = tf.cast(0.001 * batch_size / num_training_points, tf.float32)
-        kl_weight = tf.cast(0.01 * batch_size / num_training_points, tf.float32)
+        weight = tf.cast(kl_weight * batch_size / num_training_points, tf.float32)
         kl_div = tf.reduce_sum(head.layers[0].submodules[5].surrogate_posterior_kl_divergence_prior())
 
-        loss = tf.multiply(kl_weight, kl_div)
+        loss = tf.multiply(weight, kl_div)
         # tf.print('kl_weight: ', kl_weight)
         # tf.print('kl_loss: ', loss)
         # # tf.print('u_var: ', head.variables[4])
