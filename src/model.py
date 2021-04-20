@@ -71,14 +71,17 @@ class Model:
 
             # Use gt, pseudo and soft labels to train based on the strongly augmented images
             train_mil_generator = get_data_generator_with_targets(train_generator_strong_aug, training_targets, sample_weights)
-            self.model.fit(
-                train_mil_generator,
-                epochs=epoch+1,
-                class_weight=class_weights,
-                initial_epoch=epoch,
-                steps_per_epoch=steps_all,
-                callbacks=[callbacks],
-            )
+            try:
+                self.model.fit(
+                    train_mil_generator,
+                    epochs=epoch+1,
+                    class_weight=class_weights,
+                    initial_epoch=epoch,
+                    steps_per_epoch=steps_all,
+                    callbacks=[callbacks],
+                )
+            except:
+                print('Problem in model training, skipping epoch.')
 
     def test(self, data_gen: DataGenerator):
         """
