@@ -13,7 +13,11 @@ def save_dataframe_with_output(dataframe: pd.DataFrame, predictions: np.array, f
     out_df['instance_name'] = dataframe['image_path']
     out_df['instance_label'] = dataframe['class']
     out_df['bag_name'] = dataframe['wsi']
-    out_df['bag_label'] = dataframe['wsi_label']
+    if 'wsi_primary_label' in dataframe:
+        out_df['bag_label_primary'] = dataframe['wsi_primary_label']
+        out_df['bag_label_secondary'] = dataframe['wsi_secondary_label']
+    elif 'wsi_label' in dataframe:
+        out_df['bag_label'] =  dataframe['wsi_label']
     output_dir = os.path.join(output_dir, 'feature_predictions')
     os.makedirs(output_dir, exist_ok=True)
     save_path = output_dir + '/' + save_name + '.csv'
