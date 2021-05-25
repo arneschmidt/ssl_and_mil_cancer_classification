@@ -80,6 +80,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config = load_configs(args)
 
+    if config['logging']['run_name'] == 'auto':
+        config['logging']['run_name'] = args.experiment_config.split('/')[-2]
+
     print('Create output folder')
     config['output_dir'] = os.path.join(config['data']['artifact_dir'], config['logging']['run_name'])
     os.makedirs(config['output_dir'], exist_ok=True)
