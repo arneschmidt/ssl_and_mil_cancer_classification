@@ -80,8 +80,9 @@ class Model:
                     steps_per_epoch=steps_all,
                     callbacks=[callbacks],
                 )
-            except:
-                print('Problem in model training, skipping epoch.')
+            except Exception as e:
+                print('Exception: ', e)
+                print('Failure in training, try again')
 
     def test(self, data_gen: DataGenerator):
         """
