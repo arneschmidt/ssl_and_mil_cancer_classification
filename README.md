@@ -21,8 +21,8 @@ To make this code run on your linux machine you need to:
 ## Reproduce the Experiments of the Paper
 In the paper we show the following experiment results for patch-level Gleason grading (on SICAPv2) and WSI-level breast 
 cancer classification (on Camelyon16):
-![Figure 2](./experiment_results/Fig2.png)
-![Table 1](./experiment_results/Tab1.png)
+![Figure 3](./experiment_results/fig_3.png)
+![Table 2_3](./experiment_results/table_2_3.png)
 
 To run the experiments, please follow this instructions:
 
@@ -55,10 +55,6 @@ To run the experiments, please follow this instructions:
     * To test the model use the test configurations test_config.yaml, f.e.:
         * `python src/main.py -dc ./dataset_dependent/camelyon16/experiments/efficient_labeling/P_5/test_config.yaml`
 4. To see the output, see below description of logging.
-
-## Trained Models
-The trained keras h5-models of the experiments are all available and can be sent by the authors to reproduce all experiment results.
-They are ~100Mb each and too big to include them in github or the supplementary material.
 
 ## Experiment Logging
 * Logging is done with mlflow (https://mlflow.org/docs/latest/tracking.html), it is already installed if you followed the installation guidlines above
