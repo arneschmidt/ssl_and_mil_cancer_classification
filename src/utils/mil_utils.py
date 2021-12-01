@@ -52,7 +52,7 @@ def get_mil_pseudo_labels(predictions, train_df, unlabeled_index, number_of_pseu
     return pseudo_labels
 
 def get_ssl_pseudo_labels(predictions, train_df, unlabeled_index, number_of_pseudo_labels_per_class):
-    confidence_threshold = 0.3 # as proposed in fixmatch
+    confidence_threshold = 0.95 # as proposed in fixmatch
     pseudo_labels = np.full(shape=len(predictions), fill_value=unlabeled_index)
     ps_one_hot = np.where(predictions > confidence_threshold, np.ones_like(predictions), np.zeros_like(predictions))
     for i in range(len(pseudo_labels)):
