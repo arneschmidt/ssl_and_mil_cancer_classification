@@ -9,11 +9,14 @@ def get_one_hot_training_targets(train_df, label_weights, num_classes):
     return gt_labels_one_hot, sample_weights
 
 def combine_pseudo_labels_with_instance_labels(predictions, prediction_indices,
-                                               train_df, number_of_pseudo_labels_per_class, label_weights):
+                                               train_df, number_of_pseudo_labels_per_class, label_weights, ssl=False):
     unlabeled_index = len(predictions[0]) # index of unlabeled class
     gt_labels = np.array(train_df['class'], dtype=int)
     predictions = pad_array(predictions, prediction_indices, len(train_df))
-    pseudo_labels = get_pseudo_labels(predictions, train_df, unlabeled_index, number_of_pseudo_labels_per_class)
+    if ssl:
+        pseudo_labels = get_ssl_pseudo_labels(predictions, train_df, unlabeled_index, number_of_pseudo_labels_per_class)
+    else:
+        pseudo_labels = get_mil_pseudo_labels(predictions, train_df, unlabeled_index, number_of_pseudo_labels_per_class)
     training_targets = np.where(gt_labels == unlabeled_index, pseudo_labels, gt_labels).astype(np.int) # choose pseudo lables only when gt unlabeled
 
     sample_weights = _calculate_sample_weights(gt_labels, training_targets, label_weights, unlabeled_index)
@@ -21,7 +24,7 @@ def combine_pseudo_labels_with_instance_labels(predictions, prediction_indices,
 
     return training_targets_soft_and_one_hot, sample_weights
 
-def get_pseudo_labels(predictions, train_df, unlabeled_index, number_of_pseudo_labels_per_class):
+def get_mil_pseudo_labels(predictions, train_df, unlabeled_index, number_of_pseudo_labels_per_class):
     row = 0
     pseudo_labels = np.full(shape=len(predictions), fill_value=unlabeled_index)
     while True:
@@ -46,6 +49,16 @@ def get_pseudo_labels(predictions, train_df, unlabeled_index, number_of_pseudo_l
             raise Exception('Error in pseudo labeling with dataframes')
         else:
             row = end_row_wsi
+    return pseudo_labels
+
+def get_ssl_pseudo_labels(predictions, train_df, unlabeled_index, number_of_pseudo_labels_per_class):
+    confidence_threshold = 0.3 # as proposed in fixmatch
+    pseudo_labels = np.full(shape=len(predictions), fill_value=unlabeled_index)
+    ps_one_hot = np.where(predictions > confidence_threshold, np.ones_like(predictions), np.zeros_like(predictions))
+    for i in range(len(pseudo_labels)):
+        ps = np.argmax(ps_one_hot[i])
+        if ps > 0:
+            pseudo_labels[i] = ps
     return pseudo_labels
 
 def convert_to_one_hot_and_soft_labels(training_targets, predictions, unlabeled_index):

@@ -24,14 +24,15 @@ model:
       number_hidden_units: 0 # feature dimension of hidden layer, set to 0 to skip this layer
     gp:
       inducing_points: 200
+      kl_weight: 0.1
     bnn:
       number_hidden_units: 100
       kl_loss_factor: 1
 
 data:
   dataset_config: ./dataset_dependent/sicapv2/config.yaml
-  supervision: mil # 'supervised', 'mil'
-  positive_instance_labels_per_bag: all # define the number of patch labels per WSI and class that is visible to the model
+  supervision: mil # 'supervised', 'mil', 'ssl'
+  positive_instance_labels_per_bag: 5 # define the number of patch labels per WSI and class that is visible to the model
   positive_pseudo_instance_labels_per_bag: 0 # define the number of pseudo lablels per WSI
   strong_augment_brightness_range: [0.5, 1.5] # brightness augmentation range for strong augmentation
   strong_augment_channel_shift: 0.0

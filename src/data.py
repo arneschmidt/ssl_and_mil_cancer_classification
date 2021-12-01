@@ -37,7 +37,7 @@ class DataGenerator():
         if mode == 'train' or  mode == 'predict':
             self.load_dataframes(split='train')
             # Init setting of semi-supervised MIL training
-            if data_config['supervision'] == 'mil':
+            if data_config['supervision'] in ['mil', 'ssl']:
                 self.train_generator_strong_aug = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong',
                                                                                      shuffle=True, target_mode='index')
                 self.train_generator_weak_aug = self.data_generator_from_dataframe(self.train_df_weak_aug, image_augmentation='weak',

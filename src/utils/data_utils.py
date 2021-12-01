@@ -22,20 +22,32 @@ def extract_df_info(dataframe_raw, wsi_df, data_config, split='train'):
     return dataframe
 
 def get_instance_classes(dataframe, dataframe_raw, wsi_df, data_config, split):
-    if data_config['supervision'] == 'mil' and data_config['dataset_type'] == 'prostate_cancer':
-        class_columns = [dataframe_raw["NC"], dataframe_raw["G3"], dataframe_raw["G4"], dataframe_raw["G5"], dataframe_raw["unlabeled"]]
-    elif data_config['supervision'] == 'supervised' and data_config['dataset_type'] == 'prostate_cancer':
-        class_columns = [dataframe_raw["NC"], dataframe_raw["G3"], dataframe_raw["G4"], dataframe_raw["G5"]]
-    elif data_config['supervision'] == 'mil' and data_config['dataset_type'] == 'cancer_binary':
-        class_columns = [dataframe_raw['N'], dataframe_raw['P'], dataframe_raw['unlabeled']]
-    elif data_config['supervision'] == 'supervised' and data_config['dataset_type'] == 'cancer_binary':
-        class_columns = [dataframe_raw['N'], dataframe_raw['P']]
+    if data_config['supervision'] == 'supervised':
+        if data_config['dataset_type'] == 'cancer_binary':
+            class_columns = [dataframe_raw['N'], dataframe_raw['P']]
+        elif data_config['dataset_type'] == 'prostate_cancer':
+            class_columns = [dataframe_raw["NC"], dataframe_raw["G3"], dataframe_raw["G4"], dataframe_raw["G5"]]
+    else:
+        if data_config['dataset_type'] == 'cancer_binary':
+            class_columns = [dataframe_raw['N'], dataframe_raw['P'], dataframe_raw['unlabeled']]
+        elif data_config['dataset_type'] == 'prostate_cancer':
+            class_columns = [dataframe_raw["NC"], dataframe_raw["G3"], dataframe_raw["G4"], dataframe_raw["G5"],
+                             dataframe_raw["unlabeled"]]
+    #
+    # if data_config['supervision'] == 'mil' and data_config['dataset_type'] == 'prostate_cancer':
+    #     class_columns = [dataframe_raw["NC"], dataframe_raw["G3"], dataframe_raw["G4"], dataframe_raw["G5"], dataframe_raw["unlabeled"]]
+    # elif data_config['supervision'] == 'supervised' and data_config['dataset_type'] == 'prostate_cancer':
+    #     class_columns = [dataframe_raw["NC"], dataframe_raw["G3"], dataframe_raw["G4"], dataframe_raw["G5"]]
+    # elif data_config['supervision'] == 'mil' and data_config['dataset_type'] == 'cancer_binary':
+    #     class_columns = [dataframe_raw['N'], dataframe_raw['P'], dataframe_raw['unlabeled']]
+    # elif data_config['supervision'] == 'supervised' and data_config['dataset_type'] == 'cancer_binary':
+    #     class_columns = [dataframe_raw['N'], dataframe_raw['P']]
     dataframe["class"] = np.argmax(class_columns, axis=0).astype(str)
 
-    if data_config['supervision'] == 'mil':
-        dataframe = adopt_dataframe_to_mil(dataframe, wsi_df, data_config, split)
-    else:
+    if data_config['supervision'] == 'supervised':
         dataframe["wsi_contains_unlabeled"] = False
+    else:
+        dataframe = adopt_dataframe_to_mil(dataframe, wsi_df, data_config, split)
 
     return dataframe
 
