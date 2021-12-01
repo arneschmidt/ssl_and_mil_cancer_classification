@@ -55,16 +55,24 @@ class Model:
 
         # loop for training per epochs
         for epoch in range(self.config["model"]["epochs"]):
+            # Supervised case: get one hot targets from labels
+            if self.config['data']['supervision'] == 'supervised':
+                training_targets, sample_weights = get_one_hot_training_targets(data_gen.train_df, label_weights,
+                                                                                self.num_classes)
             # Semi-supervised MIL case: make predictions, produce pseudo labels and soft labels
-            if self.config['data']['supervision'] == 'mil':
+            else:
+                if self.config['data']['supervision'] == 'ssl':
+                    ssl = True
+                else:
+                    ssl = False
                 print('Make predictions to produce pseudo labels..')
                 predictions = self.model.predict(train_generator_weak_aug, batch_size=self.batch_size, steps=steps_positive_bags_only, verbose=1)
                 training_targets, sample_weights = combine_pseudo_labels_with_instance_labels(predictions, predictions_indices,
-                                                                                              data_gen.train_df, num_pseudo_labels, label_weights)
-            # Supervised case: get one hot targets from labels
-            else:
-                training_targets, sample_weights = get_one_hot_training_targets(data_gen.train_df, label_weights,
-                                                                                self.num_classes)
+                                                                                              data_gen.train_df, num_pseudo_labels,
+                                                                                              label_weights, ssl)
+
+
+
             # Optional: class-weighting based on groundtruth and estimated labels
             if self.config["model"]["class_weighted_loss"]:
                 class_weights = self._calculate_class_weights(training_targets)
