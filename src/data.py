@@ -34,7 +34,7 @@ class DataGenerator():
         """
         mode = self.model_config["mode"]
         data_config = self.data_config
-        if mode == 'train' or  mode == 'predict':
+        if mode == 'train':
             self.load_dataframes(split='train')
             # Init setting of semi-supervised MIL training
             if data_config['supervision'] in ['mil', 'ssl']:
@@ -51,7 +51,7 @@ class DataGenerator():
                 self.train_generator_weak_aug = self.train_generator_strong_aug
                 self.num_training_samples = self.train_generator_strong_aug.n
             self.validation_generator = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
-        elif mode =='test':
+        elif mode =='test' or mode == 'predict':
             self.load_dataframes(split='test')
             self.validation_generator = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
             self.test_generator = self.data_generator_from_dataframe(self.test_df, target_mode='raw')
