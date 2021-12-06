@@ -3,21 +3,31 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+
+
 def save_dataframe_with_output(dataframe: pd.DataFrame, predictions: np.array, features: np.array, output_dir: str,
-                               save_name: str):
+                               save_name: str, predict_mode=False):
+
     out_df = pd.DataFrame()
-    out_df['cnn_prediction'] = np.argmax(predictions, axis=1)
-    for feature_id in range(np.shape(features)[1]):
-        feature_name = 'feature_' + str(feature_id)
-        out_df[feature_name] = features[:, feature_id]
     out_df['instance_name'] = dataframe['image_path']
     out_df['instance_label'] = dataframe['class']
-    out_df['bag_name'] = dataframe['wsi']
-    if 'wsi_primary_label' in dataframe:
-        out_df['bag_label_primary'] = dataframe['wsi_primary_label']
-        out_df['bag_label_secondary'] = dataframe['wsi_secondary_label']
-    elif 'wsi_label' in dataframe:
-        out_df['bag_label'] =  dataframe['wsi_label']
+    out_df['cnn_prediction'] = np.argmax(predictions, axis=1)
+
+    if not predict_mode:
+        for feature_id in range(np.shape(features)[1]):
+            feature_name = 'feature_' + str(feature_id)
+            out_df[feature_name] = features[:, feature_id]
+        out_df['bag_name'] = dataframe['wsi']
+        if 'wsi_primary_label' in dataframe:
+            out_df['bag_label_primary'] = dataframe['wsi_primary_label']
+            out_df['bag_label_secondary'] = dataframe['wsi_secondary_label']
+        elif 'wsi_label' in dataframe:
+            out_df['bag_label'] =  dataframe['wsi_label']
+    else:
+        out_df['cnn_prediction_prob'] = np.max(predictions, axis=1)
+        for class_id in range(np.shape(predictions)[1]):
+            feature_name = 'cnn_prob_class_' + str(class_id)
+            out_df[feature_name] = predictions[:, class_id]
     output_dir = os.path.join(output_dir, 'feature_predictions')
     os.makedirs(output_dir, exist_ok=True)
     save_path = output_dir + '/' + save_name + '.csv'

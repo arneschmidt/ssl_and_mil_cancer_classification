@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_addons as tfa
 import numpy as np
+import pandas as pd
 from mlflow_log import MLFlowCallback, format_metrics_for_mlflow
 from model_architecture import create_model
 from sklearn.utils import class_weight
@@ -108,9 +109,9 @@ class Model:
         Save predictions of a single random batch for demonstration purposes.
         :param data_gen:  data generator object to provide the image data generators and dataframes
         """
-        image_batch = data_gen.test_generator.next()
-        predictions = self.model.predict(image_batch[0], steps=1)
-        self._save_predictions(image_batch, predictions, self.config['output_dir'])
+        df = data_gen.test_df
+        predictions = self.model.predict(data_gen.test_generator)
+        save_dataframe_with_output(df, predictions, None, self.config['output_dir'], 'test_predictions', predict_mode=True)
 
     def predict_features(self, data_gen: DataGenerator):
         """
@@ -184,14 +185,5 @@ class Model:
         self.model.layers[1].load_weights(os.path.join(model_path, "head.h5"))
         self.model.summary()
 
-    def _save_predictions(self, image_batch: np.array, predictions: np.array, output_dir: str):
-        for i in range(image_batch[0].shape[0]):
-            plt.figure()
-            image = image_batch[0][i]
-            ground_truth = image_batch[1][i][1]
-            prediction = predictions[i][1]
-            plt.imshow(image.astype(int))
-            plt.title("Ground Truth: " + str(ground_truth) + "    Prediction: " + str(prediction))
-            os.makedirs(output_dir, exist_ok=True)
-            plt.savefig(os.path.join(output_dir, str(i) + ".png"))
+
 
