@@ -1,6 +1,7 @@
-# Coupling Semi-Supervised and Multiple Instance Learning for Histopathological Image Classification 
-This is the code of the paper Coupling Semi-Supervised and Multiple Instance Learning for Histopathological Image Classification by
-Arne Schmidt, Julio Silva-Rodŕıguez, Rafael Molina, and Valery Naranjo.
+# Efficient Cancer Classification by Coupling Semi Supervised and Multiple Instance Learning
+This is the code of the paper 
+**A. Schmidt, J. Silva-Rodríguez, R. Molina and V. Naranjo, "Efficient Cancer Classification by Coupling Semi Supervised and Multiple Instance Learning," in IEEE Access, vol. 10, pp. 9763-9773, 2022, doi: 10.1109/ACCESS.2022.3143345.**
+
 We try our best to make the code reusable and the experiments reproducible by giving a detailed instruction, description 
 of dependencies, configurations and run commands:
 ## Installation and Usage

@@ -1,6 +1,6 @@
 # This is the main config. Parameters are updated and possibly overwritten by dataset dependent configs.
 model:
-  mode: train # "train", "test", "predict", "predict_features"
+  mode: predict # "train", "test", "predict", "predict_features"
   batch_size: 16
   epochs: 20
   learning_rate: 0.01
