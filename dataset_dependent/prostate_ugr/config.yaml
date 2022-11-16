@@ -1,0 +1,11 @@
+data:
+  dataset_name: prostate_ugr
+  dir: /data/Prostata/Images_September/Data/Partition_ROI/ROI_Arne/
+  data_split_dir: /data/Prostata/Images_September/Data/Partition_ROI/ROI_Arne/
+  artifact_dir: ./dataset_dependent/prostate_ugr/
+  image_target_size: [250, 250]
+  num_classes: 4
+  dataset_type: prostate_cancer
+
+
+

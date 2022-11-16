@@ -1,0 +1,10 @@
+model:
+  mode: train
+  load_model: None # /work/work_arne/ugr_prostate_cancer/pretrained_model_on_panda/
+
+data:
+  artifact_dir: ../../experiments/prostate_ugr/experiments/
+
+logging:
+  run_name: retraining
+  log_artifacts: True

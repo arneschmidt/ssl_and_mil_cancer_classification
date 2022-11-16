@@ -1,0 +1,10 @@
+model:
+  mode: predict
+  load_model: ../../experiments/prostate_ugr/experiments/retraining/
+
+data:
+  artifact_dir: ../../experiments/prostate_ugr/experiments/
+
+logging:
+  run_name: retraining
+  log_artifacts: True

@@ -1,0 +1,50 @@
+# This is the main config. Parameters are update and possibly overwritten by dataset dependent configs.
+model:
+  mode: train # "train", "test", "predict", "predict_features"
+  batch_size: 16
+  epochs: 30
+  learning_rate: 0.01
+  optimizer: sgd
+  class_weighted_loss: False
+  loss_function: categorical_crossentropy # "categorical_crossentropy", "focal_loss"
+  metrics_patch_level: True
+  metrics_wsi_level: True
+  metrics_for_model_saving: val_f1_mean
+  load_model: None # 'None' or path to experiment folder which containes 'models' directory
+  save_model: True # True or False
+  feature_extractor:
+    type: efficientnetb0 # "fsconv", "simple_cnn", "mobilenetv2", "resnet50", "efficientnetb0", "efficientnetb1"
+    global_max_pooling: False
+    num_output_features: 0 # feature dimension of feature extractor output, set to 0 to skip this layer
+    output_activation: sigmoid # sigmoid, relu
+  head:
+    type: deterministic # deterministic, gp, bnn
+    deterministic:
+      dropout: 0.2
+      number_hidden_units: 0 # feature dimension of hidden layer, set to 0 to skip this layer
+    gp:
+      inducing_points: 200
+    bnn:
+      number_hidden_units: 100
+      kl_loss_factor: 1
+
+data:
+  dataset_config: ./dataset_dependent/prostate_ugr/config.yaml
+  supervision: supervised # 'supervised', 'mil'
+  positive_instance_labels_per_bag: all
+  positive_pseudo_instance_labels_per_bag: 0
+  strong_augment_brightness_range: [0.5, 1.5]
+  strong_augment_channel_shift: 0.0
+  weak_augment_brightness_range: [0.9, 1.1]
+  weak_augment_channel_shift: 0.0
+  label_weights:
+    positive_gt_labels: 3.0
+    pseudo_labels: 1.0
+    soft_labels: 1.0
+    negative_gt_labels: 1.0
+
+logging:
+  log_experiment: True
+  log_artifacts: False
+  run_name: retraining
+  tracking_url: /work/work_arne/mlflow_server
