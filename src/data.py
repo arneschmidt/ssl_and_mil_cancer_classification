@@ -4,7 +4,7 @@ import numpy as np
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from utils.data_utils import extract_df_info
 from typing import Dict, Optional, Tuple
-
+from keras_preprocessing import image
 
 class DataGenerator():
     """
@@ -38,33 +38,32 @@ class DataGenerator():
             self.load_dataframes(split='train')
             # Init setting of semi-supervised MIL training
             if data_config['supervision'] in ['mil', 'ssl']:
-                self.train_generator_strong_aug = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong',
+                self.train_generator_strong_aug, self.train_df = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong',
                                                                                      shuffle=True, target_mode='index')
-                self.train_generator_weak_aug = self.data_generator_from_dataframe(self.train_df_weak_aug, image_augmentation='weak',
+                self.train_generator_weak_aug, self.train_df_weak_aug = self.data_generator_from_dataframe(self.train_df_weak_aug, image_augmentation='weak',
                                                                                    shuffle=False, target_mode='None')
                 self.num_training_samples = self.train_generator_weak_aug.n
             # Init supervised training setting
             else:
                 self.train_df = self.train_df[self.train_df['class'] != self.data_config['num_classes']].reset_index()
-                self.train_generator_strong_aug = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong',
+                self.train_generator_strong_aug, self.train_df = self.data_generator_from_dataframe(self.train_df, image_augmentation='strong',
                                                                                      shuffle=True, target_mode='index')
                 self.train_generator_weak_aug = self.train_generator_strong_aug
                 self.num_training_samples = self.train_generator_strong_aug.n
-            self.validation_generator = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
+            self.validation_generator, self.val_df = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
         elif mode =='test' or mode == 'predict':
             self.load_dataframes(split='test')
-            self.validation_generator = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
-            self.test_generator = self.data_generator_from_dataframe(self.test_df, target_mode='raw')
+            self.validation_generator, self.val_df = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
+            self.test_generator, self.test_df = self.data_generator_from_dataframe(self.test_df, target_mode='raw')
             self.num_training_samples = self.test_generator.n # just formally necessary for model initialization
         elif mode == 'predict_features':
             self.load_dataframes(split='train')
-            self.train_generator_weak_aug = self.data_generator_from_dataframe(self.train_df,
+            self.train_generator_weak_aug, self.train_df = self.data_generator_from_dataframe(self.train_df,
                                                                                image_augmentation='weak',
                                                                                shuffle=False, target_mode='None')
-            self.validation_generator = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
+            self.validation_generator, self.val_df = self.data_generator_from_dataframe(self.val_df, target_mode='raw')
             self.load_dataframes(split='test')
-            self.test_generator = self.data_generator_from_dataframe(self.test_df, target_mode='raw')
-
+            self.test_generator, self.test_df = self.data_generator_from_dataframe(self.test_df, target_mode='raw')
         else:
             raise Exception('Choose valid model mode')
 
@@ -111,6 +110,18 @@ class DataGenerator():
             class_mode = None
             classes = None
 
+        def validate_filename(filename, white_list_formats):
+            return (filename.lower().endswith(white_list_formats) and
+                    os.path.isfile(filename))
+        filepaths = dataframe["image_path"].map(
+            lambda fname: os.path.join(self.data_config["dir"], fname)
+        )
+        mask = filepaths.apply(validate_filename, args=(('png', 'jpg', 'jpeg', 'bmp', 'ppm', 'tif', 'tiff'),))
+        dataframe = dataframe[mask]
+        n_invalid = (~mask).sum()
+        if n_invalid:
+            print('Warning. Found ' + str(n_invalid) + 'invalid filnames')
+        dataframe = dataframe.reset_index(drop=True)
         dataframe['index'] = dataframe.index
 
         generator = datagen.flow_from_dataframe(
@@ -126,8 +137,11 @@ class DataGenerator():
             # save_to_dir=self.data_config['artifact_dir'] + '/' + image_augmentation,
             # save_format='jpeg'
             )
+        if len(dataframe) > len(generator):
+            dataframe = dataframe[dataframe['image_path'].isin(generator.filenames)]
+            print('Attention! Not all images in Dataframe were loaded.')
 
-        return generator
+        return generator, dataframe
 
     def load_dataframes(self, split):
         """
@@ -193,6 +207,27 @@ class DataGenerator():
                 self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val')
                 test_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "test_patches.csv"))
                 self.test_df = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test')
+        elif self.data_config["dataset_name"] == "prostate_ugr":
+            wsi_df = pd.read_csv(os.path.join(self.data_config["dir"], "wsi_labels.csv"))
+            wsi_df['Gleason_primary'] = wsi_df['gleason_score'].str.split('+').str[0].astype(int)
+            wsi_df['Gleason_secondary'] = wsi_df['gleason_score'].str.split('+').str[1].astype(int)
+            wsi_df.rename(columns={"image_id": "slide_id"}, inplace=True)
+            self.wsi_df = wsi_df
+            if split == 'train':
+                train_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "train_patches.csv"))
+                train_df_raw['image_name'] = train_df_raw['image_name'] + '.jpg'
+                self.train_df = extract_df_info(train_df_raw, self.wsi_df, self.data_config, split='train', wsi_delimiter='_row')
+                self.train_df_weak_aug = self.train_df[self.train_df['wsi_contains_unlabeled']]
+                val_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "train_patches.csv"))
+                val_df_raw['image_name'] = val_df_raw['image_name'] + '.jpg'
+                self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val', wsi_delimiter='_row')
+            elif split == 'test':
+                val_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "train_patches.csv"))
+                val_df_raw['image_name'] = val_df_raw['image_name'] + '.jpg'
+                self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val', wsi_delimiter='_row')
+                test_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val_patches.csv"))
+                test_df_raw['image_name'] = test_df_raw['image_name'] + '.jpg'
+                self.test_df = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test', wsi_delimiter='_row')
         else:
             raise Exception("Please choose valid dataset name!")
 

@@ -4,12 +4,12 @@ import pandas as pd
 import numpy as np
 
 
-def extract_df_info(dataframe_raw, wsi_df, data_config, split='train'):
+def extract_df_info(dataframe_raw, wsi_df, data_config, split='train', wsi_delimiter='_'):
     print('Preparing data split '+split)
     # Notice: class 0 = NC, class 1 = G3, class 2 = G4, class 3 = G5
     dataframe = pd.DataFrame()
     dataframe["image_path"] = 'images/' + dataframe_raw["image_name"]
-    wsis = dataframe_raw["image_name"].str.split('_').str[0]
+    wsis = dataframe_raw["image_name"].str.split(wsi_delimiter).str[0]
     dataframe["wsi"] = wsis
     # dataframe_raw["wsi"]  = wsis
 
@@ -95,9 +95,9 @@ def set_wsi_labels_pc(dataframe, wsi_dataframe):
         dataframe['wsi_index'][id_bool] = row
         dataframe['wsi_primary_label'][id_bool] = np.max([int(wsi_dataframe['Gleason_primary'][row]) - 2, 0])
         dataframe['wsi_secondary_label'][id_bool] = np.max([int(wsi_dataframe['Gleason_secondary'][row]) - 2, 0])
-    assert(np.all(dataframe['wsi_index'] != -1))
-    assert(np.all(dataframe['wsi_primary_label'] != -1))
-    assert(np.all(dataframe['wsi_secondary_label'] != -1))
+    # assert(np.all(dataframe['wsi_index'] != -1))
+    # assert(np.all(dataframe['wsi_primary_label'] != -1))
+    # assert(np.all(dataframe['wsi_secondary_label'] != -1))
     return dataframe
 
 def set_wsi_labels_cb(dataframe, wsi_dataframe):
