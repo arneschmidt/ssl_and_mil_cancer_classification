@@ -218,14 +218,14 @@ class DataGenerator():
                 train_df_raw['image_name'] = train_df_raw['image_name'] + '.jpg'
                 self.train_df = extract_df_info(train_df_raw, self.wsi_df, self.data_config, split='train', wsi_delimiter='_row')
                 self.train_df_weak_aug = self.train_df[self.train_df['wsi_contains_unlabeled']]
-                val_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "train_patches.csv"))
+                val_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val_patches.csv"))
                 val_df_raw['image_name'] = val_df_raw['image_name'] + '.jpg'
                 self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val', wsi_delimiter='_row')
             elif split == 'test':
-                val_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "train_patches.csv"))
+                val_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val_patches.csv"))
                 val_df_raw['image_name'] = val_df_raw['image_name'] + '.jpg'
                 self.val_df = extract_df_info(val_df_raw, self.wsi_df, self.data_config, split='val', wsi_delimiter='_row')
-                test_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "val_patches.csv"))
+                test_df_raw = pd.read_csv(os.path.join(self.data_config["data_split_dir"], "test_patches.csv"))
                 test_df_raw['image_name'] = test_df_raw['image_name'] + '.jpg'
                 self.test_df = extract_df_info(test_df_raw, self.wsi_df, self.data_config, split='test', wsi_delimiter='_row')
         else:
